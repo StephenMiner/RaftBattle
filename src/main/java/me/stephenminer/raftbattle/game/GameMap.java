@@ -1,10 +1,10 @@
 package me.stephenminer.raftbattle.game;
 
 import me.stephenminer.raftbattle.RaftBattle;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -16,6 +16,8 @@ public class GameMap {
     private final String id;
     private final BoundingBox bounds;
     private final Set<UUID> players;
+
+    private GameBoard board;
     private String name;
     private Location spawn1,spawn2,waiting;
     private boolean started, starting, ending;
@@ -34,18 +36,60 @@ public class GameMap {
         this.bounds = new BoundingBox(pos1.toVector(),pos2.toVector());
         players = new HashSet<>();
         this.name = name;
+        board = new GameBoard(this);
     }
 
 
+    public void start(){
+
+    }
+
+    public void end(){
+
+    }
+
 
     public void checkStart(){
+        //Game is already starting
         if (starting || started) return;
+        //Not enough players
+        if (players.size() < plugin.readMinPlayers()) return;
+        final int delay = plugin.readStartDelay();
+        new BukkitRunnable(){
+            int count = 0;
+            @Override
+            public void run(){
+                if (count % 20 == 0) {
+                    broadcastTitle("" + (delay-count) / 20,"");
+                    broadcastSound(Sound.CAT_MEOW,1,1);
+                }
+                //Someone left
+                if (players.size() < plugin.readMinPlayers()) {
+                    starting = false;
+                    broadcastMsg(ChatColor.RED + "Start interrupted: Not Enough players");
+                    broadcastSound(Sound.CREEPER_DEATH,1,3);
+                    this.cancel();
+                    return;
+                }
+                //Game start (I dont know why, but I've always done a >= check instead of ==, I'm just paranoid like that )
+                if (count >= delay){
+                    start();
+                    this.cancel();
+                    return;
+                }
+                count++;
+            }
+        }.runTaskTimer(plugin,1,1);
     }
 
     public void checkEnd(){
 
     }
 
+    private void assignTeams(){
+        int players = players().size();
+
+    }
 
 
 
@@ -93,8 +137,49 @@ public class GameMap {
             player.teleport(plugin.reroute);
     }
 
+    public void broadcastMsg(String msg){
+        for (UUID uuid : players){
+            OfflinePlayer offline = Bukkit.getOfflinePlayer(uuid);
+            if (offline.isOnline()){
+                Player player = offline.getPlayer();
+                player.sendMessage(msg);
+            }
+        }
+    }
+
+    public void broadcastTitle(String title, String sub){
+        for (UUID uuid : players){
+            OfflinePlayer offline = Bukkit.getOfflinePlayer(uuid);
+            if (offline.isOnline()){
+                Player player = offline.getPlayer();
+                //May or may not work since method is deprecated
+                player.sendTitle(title,sub);
+            }
+        }
+    }
+
+    public void broadcastSound(Sound sound, float volume, float pitch){
+        for (UUID uuid : players){
+            OfflinePlayer offline = Bukkit.getOfflinePlayer(uuid);
+            if (offline.isOnline()){
+                Player player = offline.getPlayer();
+                player.playSound(player.getLocation(),sound,volume, pitch);
+            }
+        }
+    }
+
+
+    /*
+
+    Setters and Getters
+
+     */
+    public void setName(String name){
+        this.name = name;
+    }
+
     /**
-     * Set the spawn for team 3
+     * Set the spawn for team 1
      */
     public void setSpawn1(Location spawn1){ this.spawn1 = spawn1; }
 
@@ -116,6 +201,12 @@ public class GameMap {
     public Location spawn1(){ return spawn1; }
     public Location spawn2(){ return spawn2; }
     public Location waiting(){ return waiting;}
+
+    public String id(){ return id;}
+    public String name(){ return name; }
+
+    public Set<UUID> players(){ return players; }
+    public GameBoard board(){ return board; }
 
 
 
