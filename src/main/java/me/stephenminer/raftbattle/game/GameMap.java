@@ -41,11 +41,20 @@ public class GameMap {
 
 
     public void start(){
-
+        board.fillTeams();
+        for (OfflinePlayer offline : board.team1().getPlayers()){
+            if (!offline.isOnline()) continue;
+            Player player = offline.getPlayer();
+            player.teleport(spawn1);
+        }
+        for (OfflinePlayer offline : board.team2().getPlayers()){
+            if (!offline.isOnline()) continue;
+            Player player = offline.getPlayer();
+            player.teleport(spawn2);
+        }
     }
 
     public void end(){
-
     }
 
 
@@ -86,11 +95,6 @@ public class GameMap {
 
     }
 
-    private void assignTeams(){
-        int players = players().size();
-
-    }
-
 
 
 
@@ -117,6 +121,7 @@ public class GameMap {
         UUID uuid = player.getUniqueId();
         players.add(uuid);
         player.teleport(waiting);
+        if (!starting) checkStart();
         return true;
     }
 
@@ -135,6 +140,8 @@ public class GameMap {
         player.setScoreboard(null);
         if (teleport)
             player.teleport(plugin.reroute);
+        board.clearPreferences(player.getUniqueId());
+        if (started) checkEnd();
     }
 
     public void broadcastMsg(String msg){

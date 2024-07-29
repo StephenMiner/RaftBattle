@@ -97,8 +97,6 @@ public class GameBoard {
             UUID uuid = team2Prefer.remove(i1);
             team1Prefer.add(uuid);
         }
-
-
         Set<UUID> copy = new HashSet<>(host.players());
         team1Prefer.forEach(copy::remove);
         team2Prefer.forEach(copy::remove);
@@ -110,6 +108,8 @@ public class GameBoard {
 
         team1Prefer.forEach(uuid->team1.addPlayer(Bukkit.getOfflinePlayer(uuid)));
         team2Prefer.forEach(uuid->team2.addPlayer(Bukkit.getOfflinePlayer(uuid)));
+        team1Prefer.clear();
+        team2Prefer.clear();
     }
 
     private void assignPreference(UUID uuid, Random random){
@@ -130,4 +130,9 @@ public class GameBoard {
         return  (total % 2 != 0 && team.getSize() > 1 + (total / 2)) ||(total % 2 == 0 && team.getSize() > (total / 2));
     }
 
+
+    public void clearPreferences(UUID uuid){
+        team1Prefer.remove(uuid);
+        team2Prefer.remove(uuid);
+    }
 }
