@@ -1,3 +1,6 @@
 name: RaftBattle
 version: '${project.version}'
 main: me.stephenminer.raftbattle.RaftBattle
+
+commands:
+  raftmap:

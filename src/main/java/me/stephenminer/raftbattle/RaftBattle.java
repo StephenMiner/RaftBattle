@@ -1,33 +1,51 @@
 package me.stephenminer.raftbattle;
 
+import me.stephenminer.raftbattle.commands.GameMapCmd;
 import me.stephenminer.raftbattle.game.GameMap;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.WorldCreator;
+import me.stephenminer.raftbattle.listeners.RegionSetup;
+import org.bukkit.*;
 import org.bukkit.event.player.PlayerFishEvent;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 
 public final class RaftBattle extends JavaPlugin {
     //The place players will get teleported to when their game ends
     public Location reroute;
 
     public ConfigFile settings;
+    public ConfigFile maps;
 
     public HashMap<String, GameMap> active;
 
     @Override
     public void onEnable() {
         // Plugin startup logic
+        this.active = new HashMap<>();
         this.settings = new ConfigFile(this,"settings");
-
+        this.maps = new ConfigFile(this,"maps");
+        registerEvents();
+        addCommands();
     }
 
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+    }
+
+    private void registerEvents(){
+        PluginManager pm = this.getServer().getPluginManager();
+        pm.registerEvents(new RegionSetup(),this);
+    }
+    private void addCommands(){
+        GameMapCmd gameMapCmd = new GameMapCmd();
+        getCommand("raftmap").setExecutor(gameMapCmd);
+        getCommand("raftmap").setTabCompleter(gameMapCmd);
     }
 
 
@@ -104,6 +122,29 @@ public final class RaftBattle extends JavaPlugin {
             this.getLogger().warning("Attempted to read a Location from " + entry + ", but this string is in an invalid format!");
             return null;
         }
+    }
+
+    /**
+     * Will check the last line of lore on an item to see if it contains the identifier given
+     * @param meta
+     * @param match
+     * @return
+     */
+    public boolean checkLastLine(ItemMeta meta, String match){
+        if (meta == null || !meta.hasLore()) return false;
+        List<String> lore = meta.getLore();
+        String temp = ChatColor.stripColor(lore.get(lore.size()-1).toLowerCase());
+        return match.toLowerCase().equals(temp);
+    }
+
+    public List<String> filter(Collection<String> base, String match){
+        List<String> filtered = new ArrayList<>();
+        match = match.toLowerCase();
+        for (String entry : base){
+            String temp = ChatColor.stripColor(entry).toLowerCase();
+            if (temp.contains(match)) filtered.add(entry);
+        }
+        return filtered;
     }
 
 
