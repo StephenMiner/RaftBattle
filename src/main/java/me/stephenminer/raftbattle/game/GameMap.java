@@ -51,7 +51,7 @@ public class GameMap {
      */
     public boolean addPlayer(Player player){
        // if (players.size() > plugin.readMaxPlayers() || )
-        return true
+        return true;
     }
 
     public void removePlayer(Player player){
