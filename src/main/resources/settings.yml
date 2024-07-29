@@ -1,0 +1,4 @@
+reroute: null
+start-delay: 300
+min-start: 4
+max-players: 8
