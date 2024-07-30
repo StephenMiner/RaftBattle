@@ -3,13 +3,18 @@ package me.stephenminer.raftbattle.listeners;
 import me.stephenminer.raftbattle.RaftBattle;
 import me.stephenminer.raftbattle.game.GameMap;
 import me.stephenminer.raftbattle.game.util.OfflineProfile;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import javax.swing.plaf.nimbus.State;
 import java.util.UUID;
 
 public class GameListener implements Listener {
@@ -21,9 +26,22 @@ public class GameListener implements Listener {
     }
 
 
-
-
-
+    /**
+     * Replaces fished items with items from this game's loot tables if player is in a game
+     * @param event
+     */
+    @EventHandler
+    public void onFish(PlayerFishEvent event){
+        if (event.getState() == PlayerFishEvent.State.CAUGHT_FISH && event.getCaught() instanceof Item){
+            Player player = event.getPlayer();
+            UUID uuid = player.getUniqueId();
+            GameMap map = gameIn(uuid);
+            if (map == null) return;
+            Item item = (Item) event.getCaught();
+            ItemStack replace = map.fishHelper().fish();
+            item.setItemStack(replace);
+        }
+    }
 
 
 
@@ -41,6 +59,15 @@ public class GameListener implements Listener {
         UUID uuid = player.getUniqueId();
         GameMap game = gameIn(uuid);
         if (game == null) return;
+        game.removePlayer(player,true);
+    }
+
+    @EventHandler
+    public void worldChange(PlayerChangedWorldEvent event){
+        Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
+        GameMap game = gameIn(uuid);
+        if (game == null || event.getPlayer().getWorld().equals(game.world())) return;
         game.removePlayer(player,true);
     }
 

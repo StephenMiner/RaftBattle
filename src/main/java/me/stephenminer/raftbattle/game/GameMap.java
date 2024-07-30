@@ -1,6 +1,7 @@
 package me.stephenminer.raftbattle.game;
 
 import me.stephenminer.raftbattle.RaftBattle;
+import me.stephenminer.raftbattle.game.fishing.FishHelper;
 import me.stephenminer.raftbattle.game.util.BoundingBox;
 import me.stephenminer.raftbattle.game.util.OfflineProfile;
 import org.bukkit.*;
@@ -24,6 +25,7 @@ public class GameMap {
     private GameBoard board;
     private String name;
     private Location spawn1,spawn2,waiting;
+    private FishHelper fishHelper;
     private boolean started, starting, ending;
     /**
      *
@@ -47,6 +49,8 @@ public class GameMap {
 
 
     public void start(){
+        started = true;
+        fishHelper = new FishHelper(this);
         board.fillTeams();
         for (OfflinePlayer offline : board.team1().getPlayers()){
             if (!offline.isOnline()) continue;
@@ -243,6 +247,8 @@ public class GameMap {
     public Location spawn1(){ return spawn1; }
     public Location spawn2(){ return spawn2; }
     public Location waiting(){ return waiting;}
+    public World world(){ return spawn1.getWorld(); }
+    public FishHelper fishHelper(){ return fishHelper; }
 
     public String id(){ return id;}
     public String name(){ return name; }
