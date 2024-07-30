@@ -1,4 +1,4 @@
-package me.stephenminer.raftbattle.game;
+package me.stephenminer.raftbattle.game.util;
 
 import org.bukkit.block.Block;
 import org.bukkit.util.Vector;

@@ -19,6 +19,7 @@ public final class RaftBattle extends JavaPlugin {
     public Location reroute;
 
     public ConfigFile settings;
+    public ConfigFile loot;
     public ConfigFile maps;
 
     public HashMap<String, GameMap> active;
@@ -29,6 +30,7 @@ public final class RaftBattle extends JavaPlugin {
         this.active = new HashMap<>();
         this.settings = new ConfigFile(this,"settings");
         this.maps = new ConfigFile(this,"maps");
+        this.loot = new ConfigFile(this,"loot");
         registerEvents();
         addCommands();
     }

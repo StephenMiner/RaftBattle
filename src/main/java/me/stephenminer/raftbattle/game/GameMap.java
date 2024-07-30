@@ -1,6 +1,8 @@
 package me.stephenminer.raftbattle.game;
 
 import me.stephenminer.raftbattle.RaftBattle;
+import me.stephenminer.raftbattle.game.util.BoundingBox;
+import me.stephenminer.raftbattle.game.util.OfflineProfile;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -8,10 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class GameMap {
     private final RaftBattle plugin;
@@ -20,6 +19,7 @@ public class GameMap {
     private final BoundingBox bounds;
     private final Set<UUID> players;
     private final HashMap<Location, BlockState> savedStates;
+    private final HashMap<UUID, OfflineProfile> offlines;
 
     private GameBoard board;
     private String name;
@@ -40,6 +40,7 @@ public class GameMap {
         this.bounds = new BoundingBox(pos1.toVector(),pos2.toVector());
         this.savedStates = new HashMap<>();
         players = new HashSet<>();
+        offlines = new HashMap<>();
         this.name = name;
         board = new GameBoard(this);
     }
@@ -153,14 +154,19 @@ public class GameMap {
             player.sendMessage(ChatColor.RED + "No reroute location set!");
             return;
         }
-        player.getInventory().clear();
         player.getActivePotionEffects().clear();
         player.setScoreboard(null);
         if (teleport)
             player.teleport(plugin.reroute);
         board.clearPreferences(player.getUniqueId());
-        if (started) checkEnd();
+        if (started) {
+            OfflineProfile offline = new OfflineProfile(player.getUniqueId(),player.getHealth(),player.getFoodLevel(),player.getSaturation(),player.getInventory().getContents());
+            offlines.put(player.getUniqueId(),offline);
+            checkEnd();
+        }
+        player.getInventory().clear();
     }
+
 
     public void broadcastMsg(String msg){
         for (UUID uuid : players){
@@ -242,9 +248,11 @@ public class GameMap {
     public String name(){ return name; }
 
     public Set<UUID> players(){ return players; }
+    public HashMap<UUID, OfflineProfile> offlines(){ return offlines; }
     public GameBoard board(){ return board; }
 
     public HashMap<Location,BlockState> savedStates(){ return savedStates; }
+
 
 
 

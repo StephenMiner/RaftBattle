@@ -1,4 +1,4 @@
-package me.stephenminer.raftbattle.game;
+package me.stephenminer.raftbattle.game.util;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;

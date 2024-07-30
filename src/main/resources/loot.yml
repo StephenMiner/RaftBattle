@@ -1,0 +1,6 @@
+test:
+  weight: 20
+  loot:
+    - DIAMOND,10,1
+    - DIRT,80
+    - WOODEN_DOOR,30,2

@@ -2,6 +2,7 @@ package me.stephenminer.raftbattle.game;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
@@ -133,5 +134,12 @@ public class GameBoard {
     public void clearPreferences(UUID uuid){
         team1Prefer.remove(uuid);
         team2Prefer.remove(uuid);
+    }
+
+    public boolean isTeam1(Player player){
+        return team1.hasPlayer(player);
+    }
+    public boolean isTeam2(Player player){
+        return team2.hasPlayer(player);
     }
 }
