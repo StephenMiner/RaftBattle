@@ -1,7 +1,6 @@
 package me.stephenminer.raftbattle.commands;
 
 import me.stephenminer.raftbattle.RaftBattle;
-import me.stephenminer.raftbattle.game.GameMap;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.command.Command;

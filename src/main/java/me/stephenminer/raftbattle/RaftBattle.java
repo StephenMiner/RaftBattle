@@ -2,9 +2,9 @@ package me.stephenminer.raftbattle;
 
 import me.stephenminer.raftbattle.commands.GameMapCmd;
 import me.stephenminer.raftbattle.game.GameMap;
+import me.stephenminer.raftbattle.listeners.RegionProtector;
 import me.stephenminer.raftbattle.listeners.RegionSetup;
 import org.bukkit.*;
-import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -41,6 +41,7 @@ public final class RaftBattle extends JavaPlugin {
     private void registerEvents(){
         PluginManager pm = this.getServer().getPluginManager();
         pm.registerEvents(new RegionSetup(),this);
+        pm.registerEvents(new RegionProtector(),this);
     }
     private void addCommands(){
         GameMapCmd gameMapCmd = new GameMapCmd();

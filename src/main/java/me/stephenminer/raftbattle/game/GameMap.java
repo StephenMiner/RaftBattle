@@ -2,10 +2,13 @@ package me.stephenminer.raftbattle.game;
 
 import me.stephenminer.raftbattle.RaftBattle;
 import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -16,6 +19,7 @@ public class GameMap {
     private final String id;
     private final BoundingBox bounds;
     private final Set<UUID> players;
+    private final HashMap<Location, BlockState> savedStates;
 
     private GameBoard board;
     private String name;
@@ -34,6 +38,7 @@ public class GameMap {
         this.pos1 = pos1;
         this.pos2 = pos2;
         this.bounds = new BoundingBox(pos1.toVector(),pos2.toVector());
+        this.savedStates = new HashMap<>();
         players = new HashSet<>();
         this.name = name;
         board = new GameBoard(this);
@@ -103,7 +108,20 @@ public class GameMap {
 
 
 
+    /*
 
+    Logic Methods
+
+     */
+
+    /**
+     * Checks if the input block is within the map region
+     * @param block
+     * @return true if it is
+     */
+    public boolean isInMap(Block block){
+        return bounds.overlaps(block);
+    }
 
 
 
@@ -175,6 +193,17 @@ public class GameMap {
         }
     }
 
+    /**
+     * Attempts to save the input block state to the savedStates HashMap
+     * It will only add the BlockState if the Map doesn't already contain the BlockState's Location as a key
+     * @param state
+     */
+    public void trySaveBlockState(BlockState state){
+        Location loc = state.getLocation();
+        if (savedStates.containsKey(loc)) return;
+        savedStates.put(loc,state);
+    }
+
 
     /*
 
@@ -214,6 +243,8 @@ public class GameMap {
 
     public Set<UUID> players(){ return players; }
     public GameBoard board(){ return board; }
+
+    public HashMap<Location,BlockState> savedStates(){ return savedStates; }
 
 
 

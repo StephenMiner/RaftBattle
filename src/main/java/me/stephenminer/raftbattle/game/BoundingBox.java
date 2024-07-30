@@ -1,6 +1,5 @@
 package me.stephenminer.raftbattle.game;
 
-import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.util.Vector;
 
