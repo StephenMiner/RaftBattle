@@ -3,10 +3,14 @@ package me.stephenminer.raftbattle.listeners;
 import me.stephenminer.raftbattle.RaftBattle;
 import me.stephenminer.raftbattle.game.GameMap;
 import me.stephenminer.raftbattle.game.util.OfflineProfile;
+import org.bukkit.ChatColor;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -44,6 +48,62 @@ public class GameListener implements Listener {
     }
 
 
+    @EventHandler
+    public void stopPvPDeath(EntityDamageByEntityEvent event){
+        if (event.getEntity() instanceof Player){
+            Player player = (Player) event.getEntity();
+            if (player.getHealth() - event.getFinalDamage() <= 0){
+                GameMap map = gameIn(player.getUniqueId());
+                if (map == null) return;
+                boolean respawned = map.respawnPlayer(player);
+                if (respawned) player.sendMessage(ChatColor.GREEN + "You will respawn shortly");
+                else player.sendMessage(ChatColor.RED + "Your team's sheep is dead and you cannot respawn");
+            }
+        }
+    }
+
+
+    @EventHandler
+    public void stopOtherDeath(EntityDamageEvent event){
+        EntityDamageEvent.DamageCause cause = event.getCause();
+        if (cause == EntityDamageEvent.DamageCause.ENTITY_ATTACK || cause == EntityDamageEvent.DamageCause.ENTITY_EXPLOSION ||
+                cause == EntityDamageEvent.DamageCause.PROJECTILE) return;
+        if (event.getEntity() instanceof Player){
+            Player player = (Player) event.getEntity();
+            if (player.getHealth() - event.getFinalDamage() <= 0){
+                GameMap map = gameIn(player.getUniqueId());
+                if (map == null) return;
+                boolean respawned = map.respawnPlayer(player);
+                if (respawned) player.sendMessage(ChatColor.GREEN + "You will respawn shortly");
+                else player.sendMessage(ChatColor.RED + "Your team's sheep is dead and you cannot respawn!");
+                map.broadcastMsg(generateDeathMessage(player,cause,null));
+
+            }
+        }
+    }
+
+    private String generateDeathMessage(Player dead, EntityDamageEvent.DamageCause cause, Entity killer){
+        switch (cause){
+            case FALLING_BLOCK:
+                return dead.getName() + " was squished by a falling block";
+            case FALL:
+                return dead.getName() + " fell to their doom";
+            case THORNS:
+                return killer == null ? dead.getName() + " was pricked to death" : dead.getName() + " was pricked to death by " + killer.getName();
+            case ENTITY_ATTACK:
+                return dead.getName() + " was slain by " + killer.getName();
+            case ENTITY_EXPLOSION:
+                return dead.getName() + " was blown up by " + killer.getName();
+            case LAVA:
+                return dead.getName() + " tried to swim in lava";
+            case FIRE_TICK:
+                return dead.getName() + " burned to death";
+            case PROJECTILE:
+                return killer != null ? dead.getName() + " was shot by " + killer.getName() :  dead.getName() + " was shot";
+            default:
+                return dead.getName() + " lost track of their HP";
+        }
+    }
 
 
 

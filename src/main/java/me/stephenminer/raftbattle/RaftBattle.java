@@ -116,6 +116,10 @@ public final class RaftBattle extends JavaPlugin {
         return this.settings.getConfig().getInt("start-delay");
     }
 
+    public int respawnTime(){
+        return this.settings.getConfig().getInt("respawn-time");
+    }
+
     public Location readReroute(){
         String entry = this.settings.getConfig().getString("reroute");
         if (entry == null) return null;

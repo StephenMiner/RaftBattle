@@ -8,6 +8,8 @@ import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -27,6 +29,8 @@ public class GameMap {
     private Location spawn1,spawn2,waiting;
     private FishHelper fishHelper;
     private boolean started, starting, ending;
+
+    private SheepCore sheep1,sheep2;
     /**
      *
      * @param id Identifier for the map
@@ -49,17 +53,25 @@ public class GameMap {
 
 
     public void start(){
+        sheep1 = new SheepCore(spawn1,500);
+        sheep2 = new SheepCore(spawn2, 500);
         started = true;
         fishHelper = new FishHelper(this);
         board.fillTeams();
         for (OfflinePlayer offline : board.team1().getPlayers()){
             if (!offline.isOnline()) continue;
             Player player = offline.getPlayer();
+            player.setHealth(20);
+            player.setFoodLevel(20);
+            player.setSaturation(1);
             player.teleport(spawn1);
         }
         for (OfflinePlayer offline : board.team2().getPlayers()){
             if (!offline.isOnline()) continue;
             Player player = offline.getPlayer();
+            player.setHealth(20);
+            player.setFoodLevel(20);
+            player.setSaturation(1);
             player.teleport(spawn2);
         }
     }
@@ -142,6 +154,9 @@ public class GameMap {
             return false;
         }
         UUID uuid = player.getUniqueId();
+        player.setGameMode(GameMode.SURVIVAL);
+        player.getInventory().clear();
+        player.getActivePotionEffects().clear();
         players.add(uuid);
         player.teleport(waiting);
         if (!starting) checkStart();
@@ -172,6 +187,61 @@ public class GameMap {
     }
 
 
+    public boolean respawnPlayer(Player player){
+        player.setGameMode(GameMode.SPECTATOR);
+        player.getInventory().clear();
+        player.getActivePotionEffects().clear();
+        player.setHealth(20);
+        player.setFoodLevel(20);
+        player.setSaturation(1);
+        if (board.isTeam2(player) && !sheep2.isDead()){
+            respawnTimer(player,false);
+            return true;
+        }
+        if (board.isTeam1(player) && !sheep1.isDead()){
+            respawnTimer(player,true);
+            return true;
+        }
+        return false;
+    }
+    private void respawnTimer(Player player, boolean team1){
+        Location spawn = team1 ? spawn1 : spawn2;
+        new BukkitRunnable(){
+            int count = 0;
+            int target = plugin.readStartDelay();
+            @Override
+            public void run(){
+                if (!started){
+                    this.cancel();
+                    return;
+                }
+                if (count % 20 == 0){
+                    player.sendTitle("Respawning in " + ((target - count) / 20), "seconds");
+                    player.sendMessage(ChatColor.GREEN + "Respawning in " + ((target-count) / 20) + " seconds");
+                }
+                if (count >= target){
+                    player.teleport(spawn);
+                    outfitPlayer(player);
+                    player.setGameMode(GameMode.SURVIVAL);
+                }
+                count++;
+            }
+        }.runTaskTimer(plugin,1,1);
+    }
+
+
+    /*
+    Helper Methods
+
+     */
+
+    public void outfitPlayer(Player player){
+        ItemStack rod = new ItemStack(Material.FISHING_ROD);
+        ItemMeta meta = rod.getItemMeta();
+        meta.spigot().setUnbreakable(true);
+        rod.setItemMeta(meta);
+        player.getInventory().addItem(rod);
+    }
     public void broadcastMsg(String msg){
         for (UUID uuid : players){
             OfflinePlayer offline = Bukkit.getOfflinePlayer(uuid);
