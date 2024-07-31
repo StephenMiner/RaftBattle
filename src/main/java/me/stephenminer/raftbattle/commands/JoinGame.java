@@ -11,10 +11,8 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class JoinGame implements CommandExecutor, TabCompleter {
     private final RaftBattle plugin;
@@ -32,6 +30,14 @@ public class JoinGame implements CommandExecutor, TabCompleter {
         Player player = (Player) sender;
         if (args.length < 1){
             //TODO: Random selection or open menu
+            GameMap map = findMostPopulated();
+            if (map == null){
+                sender.sendMessage(ChatColor.RED + "All maps are in use!");
+                return false;
+            }
+            map.addPlayer(player);
+            player.sendMessage(ChatColor.GREEN + "Sending you to the game");
+            return true;
         }
         String id = ChatColor.stripColor(args[0]).toLowerCase();
         if (!validId(id)){
@@ -55,6 +61,7 @@ public class JoinGame implements CommandExecutor, TabCompleter {
 
 
     private boolean validId(String id){
+        if (id == null) return false;
         id = id.toLowerCase();
         if (!plugin.maps.getConfig().contains("maps")) return false;
         Set<String> ids = plugin.maps.getConfig().getConfigurationSection("maps").getKeys(false);
@@ -65,6 +72,22 @@ public class JoinGame implements CommandExecutor, TabCompleter {
         return plugin.active.containsKey(id) && plugin.active.get(id).started();
     }
 
+    public GameMap findMostPopulated(){
+        Collection<GameMap> maps = plugin.active.values();
+        GameMap game = maps.stream().filter(map->!map.started())
+                .sorted((m1,m2) -> m2.players().size() - m1.players().size())
+                .findFirst()
+                .orElseGet(this::getRandom);
+        return game;
+    }
+
+    private GameMap getRandom(){
+        List<String> ids = joinableIds("");
+        if (ids.size() == plugin.active.size()) return null;
+        String id = ids.get(ThreadLocalRandom.current().nextInt(ids.size()));
+        while(!validId(id)) id = ids.get(ThreadLocalRandom.current().nextInt(ids.size()));
+        return new MapLoader(id).build();
+    }
 
 
 

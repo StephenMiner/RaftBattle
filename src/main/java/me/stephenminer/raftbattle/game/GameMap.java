@@ -126,7 +126,7 @@ public class GameMap {
             @Override
             public void run(){
                 if (count % 20 == 0) {
-                    broadcastTitle("" + (delay-count) / 20,"");
+                    broadcastTitle("Start in " + (delay-count) / 20,"Seconds");
                     broadcastSound(Sound.CAT_MEOW,1,1);
                 }
                 //Someone left
