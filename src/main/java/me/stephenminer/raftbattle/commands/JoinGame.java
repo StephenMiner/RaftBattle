@@ -37,6 +37,7 @@ public class JoinGame implements CommandExecutor, TabCompleter {
             }
             map.addPlayer(player);
             player.sendMessage(ChatColor.GREEN + "Sending you to the game");
+            plugin.active.put(map.id(), map);
             return true;
         }
         String id = ChatColor.stripColor(args[0]).toLowerCase();

@@ -155,6 +155,7 @@ public class GameMap {
         if (players.isEmpty()) {
             ending = true;
             end();
+            return;
         }
         int alive1 = board.alive(board.team1());
         boolean team1win = false;
@@ -285,7 +286,7 @@ public class GameMap {
         Location spawn = team1 ? spawn1 : spawn2;
         new BukkitRunnable(){
             int count = 0;
-            int target = plugin.readStartDelay();
+            int target = plugin.respawnTime();
             @Override
             public void run(){
                 if (!started){
