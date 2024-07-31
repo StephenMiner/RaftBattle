@@ -57,6 +57,7 @@ public class GameListener implements Listener {
                 GameMap map = gameIn(player);
                 if (map == null) return;
                 if (!map.started()){
+                    event.setCancelled(true);
                     player.teleport(map.waiting());
                     player.setHealth(20);
                     player.setFoodLevel(20);
@@ -66,6 +67,7 @@ public class GameListener implements Listener {
                 boolean respawned = map.respawnPlayer(player);
                 if (respawned) player.sendMessage(ChatColor.GREEN + "You will respawn shortly");
                 else player.sendMessage(ChatColor.RED + "Your team's sheep is dead and you cannot respawn");
+                event.setDamage(0);
             }
         }
     }
@@ -83,17 +85,19 @@ public class GameListener implements Listener {
                 GameMap map = gameIn(player);
                 if (map == null) return;
                 if (!map.started()){
+                    event.setCancelled(true);
                     player.teleport(map.waiting());
                     player.setHealth(20);
                     player.setFoodLevel(20);
                     player.setSaturation(1);
                     return;
                 }
+
                 boolean respawned = map.respawnPlayer(player);
                 if (respawned) player.sendMessage(ChatColor.GREEN + "You will respawn shortly");
                 else player.sendMessage(ChatColor.RED + "Your team's sheep is dead and you cannot respawn!");
                 map.broadcastMsg(generateDeathMessage(player,cause,null));
-
+                event.setDamage(0);
             }
         }
     }

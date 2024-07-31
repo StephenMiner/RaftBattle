@@ -73,6 +73,7 @@ public class GameMap {
             player.setFoodLevel(20);
             player.setSaturation(1);
             player.setScoreboard(board.board());
+            player.setFallDistance(0);
             outfitPlayer(player);
         }
         sheep2.startTracking(this, board.team1().getPlayers().stream().map(OfflinePlayer::getUniqueId).collect(Collectors.toSet()));
@@ -85,6 +86,7 @@ public class GameMap {
             player.setSaturation(1);
             player.teleport(spawn2);
             player.setScoreboard(board.board());
+            player.setFallDistance(0);
             outfitPlayer(player);
         }
         sheep1.startTracking(this, board.team2().getPlayers().stream().map(OfflinePlayer::getUniqueId).collect(Collectors.toSet()));
@@ -150,6 +152,10 @@ public class GameMap {
 
     public void checkEnd(){
         if (ending) return;
+        if (players.isEmpty()) {
+            ending = true;
+            end();
+        }
         int alive1 = board.alive(board.team1());
         boolean team1win = false;
         if (alive1 == 0 && sheep1.isDead()){
@@ -245,8 +251,9 @@ public class GameMap {
         if (started && reconnect) {
             OfflineProfile offline = new OfflineProfile(player.getUniqueId(),player.getHealth(),player.getFoodLevel(),player.getSaturation(),player.getInventory().getContents());
             offlines.put(player.getUniqueId(),offline);
-            checkEnd();
+
         }
+        checkEnd();
         player.removeMetadata("mapId",plugin);
         clearPlayer(player);
     }
