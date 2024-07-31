@@ -2,28 +2,29 @@ package me.stephenminer.raftbattle.listeners;
 
 import me.stephenminer.raftbattle.RaftBattle;
 import me.stephenminer.raftbattle.game.GameMap;
+import me.stephenminer.raftbattle.game.SheepCore;
 import me.stephenminer.raftbattle.game.util.OfflineProfile;
 import org.bukkit.ChatColor;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Item;
-import org.bukkit.entity.Player;
+import org.bukkit.Location;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
-import org.bukkit.event.player.PlayerFishEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import javax.swing.plaf.nimbus.State;
+import java.util.HashMap;
 import java.util.UUID;
 
 public class GameListener implements Listener {
     private final RaftBattle plugin;
-
 
     public GameListener(){
         this.plugin = JavaPlugin.getPlugin(RaftBattle.class);
@@ -39,7 +40,7 @@ public class GameListener implements Listener {
         if (event.getState() == PlayerFishEvent.State.CAUGHT_FISH && event.getCaught() instanceof Item){
             Player player = event.getPlayer();
             UUID uuid = player.getUniqueId();
-            GameMap map = gameIn(uuid);
+            GameMap map = gameIn(player);
             if (map == null) return;
             Item item = (Item) event.getCaught();
             ItemStack replace = map.fishHelper().fish();
@@ -53,7 +54,7 @@ public class GameListener implements Listener {
         if (event.getEntity() instanceof Player){
             Player player = (Player) event.getEntity();
             if (player.getHealth() - event.getFinalDamage() <= 0){
-                GameMap map = gameIn(player.getUniqueId());
+                GameMap map = gameIn(player);
                 if (map == null) return;
                 boolean respawned = map.respawnPlayer(player);
                 if (respawned) player.sendMessage(ChatColor.GREEN + "You will respawn shortly");
@@ -61,6 +62,7 @@ public class GameListener implements Listener {
             }
         }
     }
+
 
 
     @EventHandler
@@ -71,7 +73,7 @@ public class GameListener implements Listener {
         if (event.getEntity() instanceof Player){
             Player player = (Player) event.getEntity();
             if (player.getHealth() - event.getFinalDamage() <= 0){
-                GameMap map = gameIn(player.getUniqueId());
+                GameMap map = gameIn(player);
                 if (map == null) return;
                 boolean respawned = map.respawnPlayer(player);
                 if (respawned) player.sendMessage(ChatColor.GREEN + "You will respawn shortly");
@@ -106,6 +108,113 @@ public class GameListener implements Listener {
     }
 
 
+    @EventHandler
+    public void queueTeam(PlayerInteractEvent event){
+        if (!event.hasItem()) return;
+        ItemStack item = event.getItem();
+
+        Player player = event.getPlayer();
+        GameMap map = gameIn(player);
+        if (map == null) return;
+        ItemMeta meta = item.getItemMeta();
+        if (plugin.checkLastLine(meta, "team1selector")){
+            if (map.board().prefersTeam1(player))
+                player.sendMessage(ChatColor.GREEN + "Set preference for team 1");
+            else player.sendMessage(ChatColor.RED + "Team is currently full");
+        }else if (plugin.checkLastLine(meta,"team2selector")){
+            if (map.board().prefersTeam2(player)) player.sendMessage(ChatColor.GREEN + "Set preference for team 2");
+            else player.sendMessage(ChatColor.RED + "Team is currently full");
+
+        }
+    }
+
+    @EventHandler (ignoreCancelled = false)
+    public void syncSheepHealth(EntityDamageEvent event){
+
+        EntityDamageEvent.DamageCause cause = event.getCause();
+        if (cause == EntityDamageEvent.DamageCause.ENTITY_ATTACK || cause == EntityDamageEvent.DamageCause.ENTITY_EXPLOSION
+        || cause == EntityDamageEvent.DamageCause.PROJECTILE) return;
+
+
+        if (event.getEntity() instanceof Sheep){
+            Sheep sheep = (Sheep) event.getEntity();
+            if (!sheep.hasMetadata("mapId")) return;
+            String id = sheep.getMetadata("mapId").get(0).asString().toLowerCase();
+            if (!plugin.active.containsKey(id)) return;
+            GameMap map = plugin.active.get(id);
+            SheepCore core = null;
+            if (map.core(true).sheep().equals(sheep)){
+                core = map.core(true);
+            }
+            if (map.core(false).sheep().equals(sheep)) core = map.core(false);
+            core.setHealth(core.health() - event.getFinalDamage());
+            event.setDamage(0);
+            core.syncHealth();
+        }
+    }
+
+    @EventHandler (priority = EventPriority.HIGH)
+    public void stopFriendlyFire(EntityDamageByEntityEvent event){
+        if (event.getEntity() instanceof Sheep){
+            Sheep sheep = (Sheep) event.getEntity();
+            if (!sheep.hasMetadata("mapId")) return;
+            String id = sheep.getMetadata("mapId").get(0).asString().toLowerCase();
+            if (!plugin.active.containsKey(id)) return;
+            GameMap map = plugin.active.get(id);
+            Player player = null;
+            if (event.getDamager() instanceof Player)
+                player = (Player) event.getDamager();
+            else if (event.getDamager() instanceof Projectile) {
+                Projectile proj = (Projectile) event.getDamager();
+                if (proj.getShooter() instanceof Player) player = (Player) proj.getShooter();
+            }
+            if (player == null) return;
+            if (map.board().isTeam1(player) && sheep.equals(map.core(true).sheep())) event.setCancelled(true);
+            if (map.board().isTeam2(player) && sheep.equals(map.core(false).sheep())) event.setCancelled(true);
+
+            if (event.isCancelled()) return;
+            SheepCore core = null;
+            if (map.core(true).sheep().equals(sheep)){
+                core = map.core(true);
+            }
+            if (map.core(false).sheep().equals(sheep)) core = map.core(false);
+            core.setHealth(core.health() - event.getFinalDamage());
+            event.setDamage(0);
+            core.syncHealth();
+        }
+    }
+
+    @EventHandler
+    public void stopOutsidePlacing(BlockPlaceEvent event){
+        Player player = event.getPlayer();
+        GameMap map = gameIn(player);
+        if (map == null) return;
+        if (!map.started()) event.setCancelled(true);
+        if (!map.isInMap(event.getBlock())) event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void stopOutsideBreaking(BlockBreakEvent event){
+        Player player = event.getPlayer();
+        GameMap map = gameIn(player);
+        if (map == null) return;
+        if (!map.started()) event.setCancelled(true);
+        if (!map.isInMap(event.getBlock())) event.setCancelled(true);
+    }
+
+
+    @EventHandler
+    public void stopLeaveBounds(PlayerMoveEvent event){
+        Location fLoc = event.getFrom();
+        Location tLoc = event.getTo();
+        if (fLoc.getBlockX() == tLoc.getBlockX() && fLoc.getBlockY() == tLoc.getBlockY() && fLoc.getBlockZ() == tLoc.getBlockZ()) return;
+        Player player = event.getPlayer();
+        GameMap map = gameIn(player);
+        if (map == null) return;
+        tLoc.setX(fLoc.getX());
+        fLoc.setZ(fLoc.getZ());
+        //if (!map.isInMap(tLoc.getBlock())) event.setCancelled(true);
+    }
 
     /*
 
@@ -117,16 +226,16 @@ public class GameListener implements Listener {
     public void onLeave(PlayerQuitEvent event){
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
-        GameMap game = gameIn(uuid);
+        GameMap game = gameIn(player);
         if (game == null) return;
-        game.removePlayer(player,true);
+        game.removePlayer(player,true, true);
     }
 
     @EventHandler
     public void worldChange(PlayerChangedWorldEvent event){
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
-        GameMap game = gameIn(uuid);
+        GameMap game = gameIn(player);
         if (game == null || event.getPlayer().getWorld().equals(game.world())) return;
         game.removePlayer(player,true);
     }
@@ -141,6 +250,17 @@ public class GameListener implements Listener {
             if (map.players().contains(uuid)) return map;
         }
         return null;
+    }
+
+    /**
+     * Might be a slightly faster version of the other method, gets the GameMap the player is in, null if none
+     * @param player
+     * @return
+     */
+    private GameMap gameIn(Player player){
+        if (!player.hasMetadata("mapId")) return null;
+        String id = player.getMetadata("mapId").get(0).asString();
+        return plugin.active.getOrDefault(id,null);
     }
 
     @EventHandler
@@ -161,6 +281,9 @@ public class GameListener implements Listener {
             player.teleport(game.spawn2());
         OfflineProfile profile = game.offlines().remove(uuid);
         profile.loadOntoPlayer(player);
+        player.setMetadata("mapId",new FixedMetadataValue(plugin,game.id()));
+        game.players().add(uuid);
+        player.setScoreboard(game.board().board());
 
     }
 

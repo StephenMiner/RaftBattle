@@ -77,7 +77,9 @@ public class RegionSetup implements Listener {
         if (!canName.contains(uuid)) return;
         event.setCancelled(true);
         //erm what the sigma...
-        String id = ChatColor.stripColor(event.getMessage().toLowerCase()).substring(event.getMessage().indexOf(' ')).trim();
+        int space = event.getMessage().indexOf(' ');
+        String id = ChatColor.stripColor(event.getMessage().toLowerCase()).trim();
+        if (space != -1) id = id.substring(space);
         if (idTaken(id)){
             player.sendMessage(ChatColor.RED + id + " is already taken, please choose a different id!");
             return;

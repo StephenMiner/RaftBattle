@@ -4,3 +4,10 @@ main: me.stephenminer.raftbattle.RaftBattle
 
 commands:
   raftmap:
+  raftjoin:
+    aliases:
+      - rjoin
+  raftquit:
+    aliases:
+      - rleave
+  raftreload:

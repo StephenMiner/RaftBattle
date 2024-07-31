@@ -1,6 +1,7 @@
 package me.stephenminer.raftbattle.commands;
 
 import me.stephenminer.raftbattle.RaftBattle;
+import me.stephenminer.raftbattle.game.util.Items;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
@@ -27,8 +28,28 @@ public class GameMapCmd implements CommandExecutor, TabCompleter {
             sender.sendMessage(ChatColor.RED + "You need to be a player to use this command!");
             return false;
         }
+        if (!sender.hasPermission("raftbattle.commands.map")){
+            sender.sendMessage(ChatColor.RED + "No permission to use this command!");
+            return false;
+        }
         Player player = (Player) sender;
         int size = args.length;
+        if (size == 1){
+            if (args[0].equalsIgnoreCase("wand")){
+                Items items = new Items();
+                player.getInventory().addItem(items.mapWand());
+                player.sendMessage(ChatColor.GREEN + "You got a wand");
+                return true;
+            }
+            if (args[0].equalsIgnoreCase("reroute")){
+                plugin.settings.reloadConfig();
+                plugin.settings.getConfig().set("reroute",plugin.fromLoc(player.getLocation()));
+                plugin.settings.saveConfig();
+                plugin.reroute = player.getLocation();
+                player.sendMessage(ChatColor.GREEN + "Set reroute point");
+                return true;
+            }
+        }
         if (size >= 2){
             String id = args[0].toLowerCase();
             if (!idExists(id)){

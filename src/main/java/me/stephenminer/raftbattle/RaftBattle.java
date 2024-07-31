@@ -1,7 +1,11 @@
 package me.stephenminer.raftbattle;
 
 import me.stephenminer.raftbattle.commands.GameMapCmd;
+import me.stephenminer.raftbattle.commands.JoinGame;
+import me.stephenminer.raftbattle.commands.QuitGame;
+import me.stephenminer.raftbattle.commands.ReloadCmd;
 import me.stephenminer.raftbattle.game.GameMap;
+import me.stephenminer.raftbattle.listeners.GameListener;
 import me.stephenminer.raftbattle.listeners.RegionProtector;
 import me.stephenminer.raftbattle.listeners.RegionSetup;
 import org.bukkit.*;
@@ -33,22 +37,34 @@ public final class RaftBattle extends JavaPlugin {
         this.loot = new ConfigFile(this,"loot");
         registerEvents();
         addCommands();
+        if (this.settings.getConfig().contains("reroute"))
+            reroute = this.fromString(this.settings.getConfig().getString("reroute"));
     }
 
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+        GameMap[] copy = active.values().toArray(new GameMap[0]);
+        for (GameMap game : copy){
+            game.end();
+        }
     }
 
     private void registerEvents(){
         PluginManager pm = this.getServer().getPluginManager();
         pm.registerEvents(new RegionSetup(),this);
         pm.registerEvents(new RegionProtector(),this);
+        pm.registerEvents(new GameListener(),this);
     }
     private void addCommands(){
         GameMapCmd gameMapCmd = new GameMapCmd();
         getCommand("raftmap").setExecutor(gameMapCmd);
         getCommand("raftmap").setTabCompleter(gameMapCmd);
+        JoinGame joinGame = new JoinGame();
+        getCommand("raftjoin").setExecutor(joinGame);
+        getCommand("raftjoin").setTabCompleter(joinGame);
+        getCommand("raftquit").setExecutor(new QuitGame());
+        getCommand("raftreload").setExecutor(new ReloadCmd());
     }
 
 

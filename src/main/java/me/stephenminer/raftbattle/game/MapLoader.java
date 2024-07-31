@@ -31,7 +31,7 @@ public class MapLoader {
     }
     public Location loadTeamSpawn(boolean team1){
         String path = team1 ? "maps." + id + ".spawn1" : "maps." + id + ".spawn2";
-        return plugin.fromString(plugin.getConfig().getString(path));
+        return plugin.fromString(plugin.maps.getConfig().getString(path));
     }
 
     public Location loadWaiting(){
