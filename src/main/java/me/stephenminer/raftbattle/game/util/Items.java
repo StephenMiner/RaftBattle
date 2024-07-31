@@ -1,15 +1,21 @@
 package me.stephenminer.raftbattle.game.util;
 
+import me.stephenminer.raftbattle.RaftBattle;
 import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Items {
+    private final RaftBattle plugin;
+    public Items(){
+        this.plugin = JavaPlugin.getPlugin(RaftBattle.class);
+    }
 
     public ItemStack mapWand(){
         ItemStack item = new ItemStack(Material.GOLD_AXE);
@@ -25,9 +31,9 @@ public class Items {
     }
 
     public ItemStack team1Selector(){
-        ItemStack item = new ItemStack(Material.WOOL, 1, DyeColor.BLUE.getWoolData());
+        ItemStack item = baseIcon(true);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(ChatColor.BLUE + "" + ChatColor.BOLD + "Click to join Team Blue");
+        meta.setDisplayName(ChatColor.YELLOW + "" + ChatColor.BOLD + "Click to join Team Blue");
         List<String> lore = new ArrayList<>();
         lore.add(ChatColor.YELLOW + "Not a guarantee! But a good chance");
         lore.add(ChatColor.YELLOW + "You only lose a guaranteed spot if people not queued");
@@ -38,7 +44,7 @@ public class Items {
         return item;
     }
     public ItemStack team2Selector(){
-        ItemStack item = new ItemStack(Material.WOOL, 1, DyeColor.RED.getWoolData());
+        ItemStack item = baseIcon(false);
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(ChatColor.RED + "" + ChatColor.BOLD + "Click to join Team Red");
         List<String> lore = new ArrayList<>();
@@ -49,5 +55,13 @@ public class Items {
         meta.setLore(lore);
         item.setItemMeta(meta);
         return item;
+    }
+
+    private ItemStack baseIcon(boolean team1){
+        String path = team1 ? "team-1-item" : "team-2-item";
+        String[] unbox = plugin.settings.getConfig().getString(path).split(",");
+        Material mat = Material.matchMaterial(unbox[0]);
+        short dmg = Short.parseShort(unbox[1]);
+        return new ItemStack(mat, 1, dmg);
     }
 }

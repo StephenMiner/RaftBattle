@@ -3,3 +3,7 @@ start-delay: 300
 min-start: 4
 max-players: 8
 respawn-time: 110
+team-1-display: "Blue Team"
+team-2-display: "Red Team"
+team-1-item: WOOL,4
+team-2-item: WOOL,1

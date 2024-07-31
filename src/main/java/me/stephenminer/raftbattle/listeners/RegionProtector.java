@@ -14,6 +14,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
+import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -80,19 +81,16 @@ public class RegionProtector implements Listener {
         GameMap map = regionIn(position);
         if (map == null) return;
         chainBlocks(position, map);
-        new BukkitRunnable(){
-            @Override
-            public void run(){
-                if (falling.isDead()) this.cancel();
-                else if (falling.isOnGround()){
-                    Block current = falling.getLocation().getBlock();
-                    if (map.isInMap(current)) map.trySaveBlockState(current.getState());
-                    this.cancel();
-                    return;
-                }
-            }
-        }.runTaskTimer(plugin,0,1);
         map.trySaveBlockState(position.getState());
+    }
+
+    @EventHandler
+    public void fallingBlockform(EntityChangeBlockEvent event){
+        Block block = event.getBlock();
+        GameMap map = regionIn(block);
+        if (map == null) return;
+     //   chainBlocks(block,map);
+        map.trySaveBlockState(block.getState());
     }
 
     @EventHandler

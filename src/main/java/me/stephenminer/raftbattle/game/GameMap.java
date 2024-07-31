@@ -8,6 +8,7 @@ import me.stephenminer.raftbattle.game.util.OfflineProfile;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.ItemStack;
@@ -99,6 +100,12 @@ public class GameMap {
             online[index] = Bukkit.getPlayer(uuid);
             index++;
         }
+        for (Entity entity : world().getEntities()){
+            if (entity instanceof Player) continue;
+            Location loc = entity.getLocation();
+            if (bounds.contains(loc.getX(),loc.getY(),loc.getZ()))
+                entity.remove();
+        }
         for (Player p : online){
             removePlayer(p,true);
         }
@@ -154,7 +161,12 @@ public class GameMap {
             ending = true;
         if (!ending) return;
         broadcastMsg("--------------------");
-        broadcastMsg(team1win ? "Team 1 has won the game" : "Team 2 has won the game");
+        broadcastMsg(team1win ? plugin.teamName(true) + " has won the game" : plugin.teamName(false) + " has won the game");
+        Set<OfflinePlayer> oplayers = team1win ? board.team1().getPlayers() : board.team2().getPlayers();
+        broadcastMsg("Winning Members: ");
+        for (OfflinePlayer offline : oplayers) {
+            broadcastMsg("- " + offline.getName());
+        }
         broadcastMsg("--------------------");
         broadcastSound(Sound.FIREWORK_LAUNCH,2,1);
         for (UUID uuid : players){
@@ -274,7 +286,7 @@ public class GameMap {
                     return;
                 }
                 if (count % 20 == 0){
-                    player.sendTitle("Respawning in " + ((target - count) / 20), "seconds");
+                    player.sendTitle("Respawning in" , ((target - count) / 20) +" seconds");
                     player.sendMessage(ChatColor.GREEN + "Respawning in " + ((target-count) / 20) + " seconds");
                 }
                 if (count >= target){

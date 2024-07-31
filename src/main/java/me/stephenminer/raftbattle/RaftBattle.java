@@ -136,6 +136,11 @@ public final class RaftBattle extends JavaPlugin {
         return this.settings.getConfig().getInt("respawn-time");
     }
 
+    public String teamName(boolean team1){
+        String path = team1 ? "team-1-display" : "team-2-display";
+        return ChatColor.translateAlternateColorCodes('&',this.settings.getConfig().getString(path));
+    }
+
     public Location readReroute(){
         String entry = this.settings.getConfig().getString("reroute");
         if (entry == null) return null;

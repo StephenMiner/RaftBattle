@@ -50,8 +50,10 @@ public class GameBoard {
         count2.addEntry(ChatColor.BLUE + "" + ChatColor.RED);
         Team sheep1 = board.registerNewTeam("sheep1hp");
         sheep1.addEntry(ChatColor.BLUE + "" + ChatColor.GREEN);
+        //sheep1.addEntry("Sheep:");
         Team sheep2 = board.registerNewTeam("sheep2hp");
         sheep2.addEntry(ChatColor.BLUE + "" + ChatColor.YELLOW);
+        //sheep2.addEntry("Sheep:");
 
         Objective obj = board.getObjective("teams");
         obj.getScore(ChatColor.BLUE + "" + ChatColor.GREEN).setScore(9);
@@ -68,11 +70,15 @@ public class GameBoard {
                     return;
                 }
                 SheepCore core1 = host.core(true);
-                sheep1.setPrefix(core1.health() + "/" + core1.maxHealth() + " HP");
+                sheep1.setPrefix(plugin.teamName(true) + " Sheep:");
+                sheep1.setSuffix(ChatColor.GREEN + " " + shortenDecimal(core1.health()) + "/" + core1.maxHealth() + " HP");
                 SheepCore core2 = host.core(false);
-                sheep2.setPrefix(core2.health() + "/" + core2.maxHealth() + " HP");
-                count1.setPrefix("Team 1: " + alive(team1) + " Alive");
-                count2.setPrefix("Team 2: " + alive(team2) + " Alive");
+                sheep2.setPrefix(plugin.teamName(false) + " Sheep:");
+                sheep2.setSuffix(ChatColor.GREEN + " " + shortenDecimal(core2.health()) + "/" + core2.maxHealth() + " HP");
+                count1.setPrefix( plugin.teamName(true) +  ":");
+                count1.setSuffix(ChatColor.WHITE + " " + alive(team1) + " Alive");
+                count2.setPrefix(plugin.teamName(false) + ":");
+                count2.setSuffix(ChatColor.WHITE + " " + alive(team2) + " Alive");
             }
         }.runTaskTimer(plugin,1, 10);
     }
@@ -203,5 +209,10 @@ public class GameBoard {
                 .filter(OfflinePlayer::isOnline)
                 .filter(player->player.getPlayer().getGameMode()== GameMode.SURVIVAL)
                 .count();
+    }
+
+    public String shortenDecimal(double num){
+        int convert = (int) (10 * num);
+        return "" + convert/10d;
     }
 }

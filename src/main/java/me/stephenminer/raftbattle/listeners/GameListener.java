@@ -56,6 +56,13 @@ public class GameListener implements Listener {
             if (player.getHealth() - event.getFinalDamage() <= 0){
                 GameMap map = gameIn(player);
                 if (map == null) return;
+                if (!map.started()){
+                    player.teleport(map.waiting());
+                    player.setHealth(20);
+                    player.setFoodLevel(20);
+                    player.setSaturation(1);
+                    return;
+                }
                 boolean respawned = map.respawnPlayer(player);
                 if (respawned) player.sendMessage(ChatColor.GREEN + "You will respawn shortly");
                 else player.sendMessage(ChatColor.RED + "Your team's sheep is dead and you cannot respawn");
@@ -75,6 +82,13 @@ public class GameListener implements Listener {
             if (player.getHealth() - event.getFinalDamage() <= 0){
                 GameMap map = gameIn(player);
                 if (map == null) return;
+                if (!map.started()){
+                    player.teleport(map.waiting());
+                    player.setHealth(20);
+                    player.setFoodLevel(20);
+                    player.setSaturation(1);
+                    return;
+                }
                 boolean respawned = map.respawnPlayer(player);
                 if (respawned) player.sendMessage(ChatColor.GREEN + "You will respawn shortly");
                 else player.sendMessage(ChatColor.RED + "Your team's sheep is dead and you cannot respawn!");
@@ -168,9 +182,10 @@ public class GameListener implements Listener {
                 Projectile proj = (Projectile) event.getDamager();
                 if (proj.getShooter() instanceof Player) player = (Player) proj.getShooter();
             }
-            if (player == null) return;
-            if (map.board().isTeam1(player) && sheep.equals(map.core(true).sheep())) event.setCancelled(true);
-            if (map.board().isTeam2(player) && sheep.equals(map.core(false).sheep())) event.setCancelled(true);
+            if (player != null) {
+                if (map.board().isTeam1(player) && sheep.equals(map.core(true).sheep())) event.setCancelled(true);
+                if (map.board().isTeam2(player) && sheep.equals(map.core(false).sheep())) event.setCancelled(true);
+            }
 
             if (event.isCancelled()) return;
             SheepCore core = null;
@@ -211,8 +226,10 @@ public class GameListener implements Listener {
         Player player = event.getPlayer();
         GameMap map = gameIn(player);
         if (map == null) return;
-        tLoc.setX(fLoc.getX());
-        fLoc.setZ(fLoc.getZ());
+        if (map.started() && !map.isInMap(tLoc.getBlock())) {
+            tLoc.setX(fLoc.getX());
+            tLoc.setZ(fLoc.getZ());
+        }
         //if (!map.isInMap(tLoc.getBlock())) event.setCancelled(true);
     }
 
