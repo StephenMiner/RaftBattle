@@ -1,3 +1,10 @@
+Things of Note:  
+1. You can put all of the maps in the same world
+2. If you want a build limit, it will basically be 1 - however high you set the map bounderies
+3. The waiting area doesn't have to (and shouldn't) be within the bounderies of the map
+4. Any time value in the settings.yml is measures in ticks. 20 ticks = second
+
+
 
 Commands:
 
