@@ -3,6 +3,7 @@ package me.stephenminer.raftbattle.commands;
 import me.stephenminer.raftbattle.RaftBattle;
 import me.stephenminer.raftbattle.game.GameMap;
 import me.stephenminer.raftbattle.game.MapLoader;
+import me.stephenminer.raftbattle.game.gui.GameMenu;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -16,8 +17,10 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class JoinGame implements CommandExecutor, TabCompleter {
     private final RaftBattle plugin;
+    public Set<UUID> editingSession;
 
     public JoinGame(){
+        editingSession = new HashSet<>();
         this.plugin = JavaPlugin.getPlugin(RaftBattle.class);
     }
 
@@ -28,8 +31,10 @@ public class JoinGame implements CommandExecutor, TabCompleter {
             return false;
         }
         Player player = (Player) sender;
+        if (inGame(player)){
+            player.sendMessage(ChatColor.RED + "You are currently in a game, do /rquit to leave");
+        }
         if (args.length < 1){
-            //TODO: Random selection or open menu
             GameMap map = findMostPopulated();
             if (map == null){
                 sender.sendMessage(ChatColor.RED + "All maps are in use!");
@@ -42,6 +47,10 @@ public class JoinGame implements CommandExecutor, TabCompleter {
         }
         String id = ChatColor.stripColor(args[0]).toLowerCase();
         if (!validId(id)){
+            if (id.equals("menu")){
+              //  GameMenu menu = new GameMenu();
+                //return true;
+            }
             player.sendMessage(ChatColor.RED + "The id " + id + " doesn't exist");
             return false;
         }
@@ -68,6 +77,24 @@ public class JoinGame implements CommandExecutor, TabCompleter {
         Set<String> ids = plugin.maps.getConfig().getConfigurationSection("maps").getKeys(false);
         return ids.contains(id);
     }
+
+    private boolean inGame(Player player){
+        if (player.hasMetadata("mapId")){
+            String data = player.getMetadata("mapId").get(0).asString();
+            return plugin.active.containsKey(data);
+        }else return false;
+    }
+
+    /**
+     * Might be a slightly faster version of the other method, gets the GameMap the player is in, null if none
+     * @param player
+     * @return
+     */
+    private GameMap gameIn(Player player){
+        if (!player.hasMetadata("mapId")) return null;
+        String id = player.getMetadata("mapId").get(0).asString();
+        return plugin.active.getOrDefault(id,null);
+    }
     private boolean gameStarted(String id){
         id = id.toLowerCase();
         return plugin.active.containsKey(id) && plugin.active.get(id).started();
@@ -84,7 +111,7 @@ public class JoinGame implements CommandExecutor, TabCompleter {
 
     private GameMap getRandom(){
         List<String> ids = joinableIds("");
-        if (ids.size() == plugin.active.size()) return null;
+        if (ids == null || ids.isEmpty()) return null;
         String id = ids.get(ThreadLocalRandom.current().nextInt(ids.size()));
         while(!validId(id)) id = ids.get(ThreadLocalRandom.current().nextInt(ids.size()));
         return new MapLoader(id).build();

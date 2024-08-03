@@ -249,13 +249,13 @@ public class GameListener implements Listener {
         UUID uuid = player.getUniqueId();
         GameMap game = gameIn(player);
         if (game == null) return;
+        System.out.println(1);
         game.removePlayer(player,true, true);
     }
 
     @EventHandler
     public void worldChange(PlayerChangedWorldEvent event){
         Player player = event.getPlayer();
-        UUID uuid = player.getUniqueId();
         GameMap game = gameIn(player);
         if (game == null || event.getPlayer().getWorld().equals(game.world())) return;
         game.removePlayer(player,true);
@@ -295,7 +295,7 @@ public class GameListener implements Listener {
                 break;
             }
         }
-        if (game == null) return;
+        if (game == null || game.ending() || !game.started()) return;
         if (game.board().isTeam1(player))
             player.teleport(game.spawn1());
         if (game.board().isTeam2(player))
@@ -305,6 +305,7 @@ public class GameListener implements Listener {
         player.setMetadata("mapId",new FixedMetadataValue(plugin,game.id()));
         game.players().add(uuid);
         player.setScoreboard(game.board().board());
+        game.broadcastMsg(ChatColor.GOLD + player.getName() + " has rejoined");
 
     }
 

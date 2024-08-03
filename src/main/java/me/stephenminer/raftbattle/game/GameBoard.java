@@ -212,7 +212,7 @@ public class GameBoard {
     }
 
     public String shortenDecimal(double num){
-        int convert = (int) (10 * num);
+        int convert = Math.max(0,(int) (10 * num));
         return "" + convert/10d;
     }
 }

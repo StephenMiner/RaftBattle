@@ -3,6 +3,7 @@ package me.stephenminer.raftbattle.commands;
 import me.stephenminer.raftbattle.RaftBattle;
 import me.stephenminer.raftbattle.game.util.Items;
 import org.bukkit.ChatColor;
+import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

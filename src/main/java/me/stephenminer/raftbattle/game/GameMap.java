@@ -16,6 +16,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scoreboard.Team;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -56,7 +57,9 @@ public class GameMap {
         board = new GameBoard(this);
     }
 
-
+    /**
+     * Starts the game, spawning the sheep, starting the scoreboard, and outfitting the players
+     */
     public void start(){
         sheep1 = new SheepCore(spawn1,10, id);
         sheep2 = new SheepCore(spawn2, 10, id);
@@ -93,6 +96,9 @@ public class GameMap {
         runWaterCheck();
     }
 
+    /**
+     * Ends the game, resets the map, and removes players
+     */
     public void end(){
         for (BlockState state : savedStates.values())
             state.update(true);
@@ -113,10 +119,14 @@ public class GameMap {
         }
         started = false;
         players.clear();
+        offlines.clear();
+        savedStates.clear();
         plugin.active.remove(id);
     }
 
-
+    /**
+     * Checks if the game should start or not. If it should, a timer will begin counting down until starting for realsies
+     */
     public void checkStart(){
         //Game is already starting
         if (starting || started) return;
@@ -150,8 +160,11 @@ public class GameMap {
         }.runTaskTimer(plugin,1,1);
     }
 
+    /**
+     * Checks if the game should end or not. If it should, a counter will be started where the game will end when it is done
+     */
     public void checkEnd(){
-        if (ending) return;
+        if (!started || ending) return;
         if (players.isEmpty()) {
             ending = true;
             end();
@@ -159,13 +172,13 @@ public class GameMap {
         }
         int alive1 = board.alive(board.team1());
         boolean team1win = false;
-        if (alive1 == 0 && sheep1.isDead()){
+        if (board.team1().getSize() == 0 || (alive1 == 0 && sheep1.isDead()))
+            ending = true;
+        int alive2 = board.alive(board.team2());
+        if (board.team2().getSize() == 0 || (alive2 == 0 && sheep2.isDead())) {
             ending = true;
             team1win = true;
         }
-        int alive2 = board.alive(board.team2());
-        if (alive2 == 0 && sheep2.isDead())
-            ending = true;
         if (!ending) return;
         broadcastMsg("--------------------");
         broadcastMsg(team1win ? plugin.teamName(true) + " has won the game" : plugin.teamName(false) + " has won the game");
@@ -182,7 +195,6 @@ public class GameMap {
         }
         Bukkit.getScheduler().runTaskLater(plugin, this::end, 100);
     }
-
 
 
 
@@ -215,7 +227,7 @@ public class GameMap {
      * A player can no longer join once the game has started or it is full
      */
     public boolean addPlayer(Player player){
-        if (players.size() > plugin.readMaxPlayers() || started) {
+        if (isFull() || started) {
             player.sendMessage(started ? ChatColor.RED + "Game is already started" : ChatColor.RED + "Game is full");
             return false;
         }
@@ -227,6 +239,7 @@ public class GameMap {
         Items items = new Items();
         player.getInventory().addItem(items.team1Selector(),items.team2Selector());
         player.setMetadata("mapId",new FixedMetadataValue(plugin,id));
+        broadcastMsg(ChatColor.GOLD + player.getName() + " has joined (" + players.size() + "/" + plugin.readMaxPlayers() + ")");
         if (!starting) checkStart();
         return true;
     }
@@ -250,12 +263,16 @@ public class GameMap {
             player.teleport(plugin.reroute);
         board.clearPreferences(player.getUniqueId());
         if (started && reconnect) {
-            OfflineProfile offline = new OfflineProfile(player.getUniqueId(),player.getHealth(),player.getFoodLevel(),player.getSaturation(),player.getInventory().getContents());
+            Team team = board.isTeam1(player) ? board.team1() : board.team2();
+            OfflineProfile offline = new OfflineProfile(player.getUniqueId(),player.getHealth(),player.getFoodLevel(),player.getSaturation(),player.getInventory().getContents(), team);
             offlines.put(player.getUniqueId(),offline);
-
-        }
+            broadcastMsg(ChatColor.GOLD + player.getName() + " has left, but can reconnect!");
+        }else broadcastMsg(ChatColor.GOLD + player.getName() + " has quit!");
+        board.team1().removePlayer(player);
+        board.team2().removePlayer(player);
         checkEnd();
         player.removeMetadata("mapId",plugin);
+
         clearPlayer(player);
     }
 
@@ -263,11 +280,23 @@ public class GameMap {
         removePlayer(player,teleport,false);
     }
 
-
+    /**
+     * Begins the respawning process. Items are cleared and health is reset.
+     * @param player
+     * @return true if the player can be respawned (is on a team)
+     */
     public boolean respawnPlayer(Player player){
         player.setGameMode(GameMode.SPECTATOR);
         clearPlayer(player);
         player.getActivePotionEffects().clear();
+        ItemStack[] content = player.getInventory().getContents();
+        World world = player.getWorld();
+        for (ItemStack item : content){
+            if (item == null) continue;
+            Material type = item.getType();
+            if (type == Material.COMPASS || type == Material.FISHING_ROD) continue;
+            world.dropItemNaturally(player.getLocation(), item);
+        }
         player.setHealth(20);
         player.setFoodLevel(20);
         player.setSaturation(1);
@@ -282,6 +311,12 @@ public class GameMap {
         }
         return false;
     }
+
+    /**
+     * A timer that when finished will finish respawning the player, putting them in survival at their spawn
+     * @param player
+     * @param team1
+     */
     private void respawnTimer(Player player, boolean team1){
         Location spawn = team1 ? spawn1 : spawn2;
         new BukkitRunnable(){
@@ -309,6 +344,9 @@ public class GameMap {
         }.runTaskTimer(plugin,1,1);
     }
 
+    /**
+     * A constant checker to see if the player is in water and needs to take damage
+     */
     public void runWaterCheck(){
         new BukkitRunnable(){
             @Override
@@ -341,12 +379,21 @@ public class GameMap {
     Helper Methods
      */
 
+    /**
+     * Clears the player inventory and potion effects
+     * @param player
+     */
     private void clearPlayer(Player player){
         player.getActivePotionEffects().clear();
         player.getInventory().clear();
         player.getEquipment().clear();
+        player.getInventory().setArmorContents(null);
     }
 
+    /**
+     * Equips the player
+     * @param player
+     */
     public void outfitPlayer(Player player){
         ItemStack rod = new ItemStack(Material.FISHING_ROD);
         ItemMeta meta = rod.getItemMeta();
@@ -354,6 +401,7 @@ public class GameMap {
         rod.setItemMeta(meta);
         player.getInventory().addItem(rod);
         player.getInventory().addItem(sheep1.compass);
+
     }
     public void broadcastMsg(String msg){
         for (UUID uuid : players){
@@ -384,6 +432,14 @@ public class GameMap {
                 player.playSound(player.getLocation(),sound,volume, pitch);
             }
         }
+    }
+
+    /**
+     *
+     * @return whether map is full, if players.size() >= max players
+     */
+    public boolean isFull(){
+        return players.size() >= plugin.readMaxPlayers();
     }
 
     /**
