@@ -8,6 +8,7 @@ import me.stephenminer.raftbattle.game.util.OfflineProfile;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -61,6 +62,7 @@ public class GameMap {
      * Starts the game, spawning the sheep, starting the scoreboard, and outfitting the players
      */
     public void start(){
+        if (started) return;
         sheep1 = new SheepCore(spawn1,10, id);
         sheep2 = new SheepCore(spawn2, 10, id);
         started = true;
@@ -151,8 +153,8 @@ public class GameMap {
                 }
                 //Game start (I dont know why, but I've always done a >= check instead of ==, I'm just paranoid like that )
                 if (count >= delay){
-                    start();
                     this.cancel();
+                    start();
                     return;
                 }
                 count++;
@@ -287,7 +289,6 @@ public class GameMap {
      */
     public boolean respawnPlayer(Player player){
         player.setGameMode(GameMode.SPECTATOR);
-        clearPlayer(player);
         player.getActivePotionEffects().clear();
         ItemStack[] content = player.getInventory().getContents();
         World world = player.getWorld();
@@ -301,6 +302,7 @@ public class GameMap {
         player.setFoodLevel(20);
         player.setSaturation(1);
         checkEnd();
+        clearPlayer(player);
         if (board.isTeam2(player) && !sheep2.isDead()){
             respawnTimer(player,false);
             return true;
@@ -397,6 +399,7 @@ public class GameMap {
     public void outfitPlayer(Player player){
         ItemStack rod = new ItemStack(Material.FISHING_ROD);
         ItemMeta meta = rod.getItemMeta();
+        meta.addEnchant(Enchantment.LURE,5,true);
         meta.spigot().setUnbreakable(true);
         rod.setItemMeta(meta);
         player.getInventory().addItem(rod);

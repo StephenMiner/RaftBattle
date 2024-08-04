@@ -125,15 +125,25 @@ public class GameListener implements Listener {
         }
     }
 
-
     @EventHandler
+    public void stopPrematureOpening(PlayerInteractEvent event){
+        Player player = event.getPlayer();
+        GameMap map = gameIn(player);
+        if (map == null) return;
+        if (!map.started()){
+            event.setCancelled(true);
+        }
+    }
+
+
+    @EventHandler (ignoreCancelled = false)
     public void queueTeam(PlayerInteractEvent event){
         if (!event.hasItem()) return;
         ItemStack item = event.getItem();
 
         Player player = event.getPlayer();
         GameMap map = gameIn(player);
-        if (map == null) return;
+        if (map == null || map.started()) return;
         ItemMeta meta = item.getItemMeta();
         if (plugin.checkLastLine(meta, "team1selector")){
             if (map.board().prefersTeam1(player))

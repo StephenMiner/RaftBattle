@@ -2,6 +2,7 @@ package me.stephenminer.raftbattle.listeners;
 
 import me.stephenminer.raftbattle.RaftBattle;
 import me.stephenminer.raftbattle.game.GameMap;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -17,6 +18,10 @@ import org.bukkit.event.block.*;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
+import org.bukkit.event.player.PlayerBucketFillEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -71,6 +76,38 @@ public class RegionProtector implements Listener {
             map.trySaveBlockState(event.getBlockReplacedState());
 
         }
+    }
+
+    @EventHandler
+    public void handleEmpty(PlayerBucketEmptyEvent event){
+        Block clicked = event.getBlockClicked();
+        BlockFace face = event.getBlockFace();
+        Block block = clicked.getRelative(face);
+        GameMap map = regionIn(block);
+        if (map == null) return;
+        chainBlocks(block,map);
+        map.trySaveBlockState(block.getState());
+    }
+
+    @EventHandler
+    public void handleFill(PlayerBucketFillEvent event){
+        Block block = event.getBlockClicked();
+        GameMap map = regionIn(block);
+        if (map == null) return;
+        map.trySaveBlockState(block.getState());
+    }
+
+    //Do note that this will also catch blocks that are clicked, which frankly isn't a bad thing.
+    //Probably still better than generating an inventory holder instance
+    @EventHandler
+    public void openBlockInventory(PlayerInteractEvent event){
+        Action action = event.getAction();
+        if (action != Action.RIGHT_CLICK_BLOCK) return;
+        Block block = event.getClickedBlock();
+        if (block == null) return;
+        GameMap map = regionIn(block);
+        if (map == null) return;
+        map.trySaveBlockState(block.getState());
     }
 
     @EventHandler

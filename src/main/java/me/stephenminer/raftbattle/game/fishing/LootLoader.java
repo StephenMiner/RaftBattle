@@ -25,6 +25,11 @@ public class LootLoader {
     private LootPair readItem(String str){
         String[] unbox = str.split(",");
         Material mat = Material.matchMaterial(unbox[0]);
+        if (mat == null){
+            System.out.println(unbox[0]);
+            return null;
+
+        }
         int weight = Integer.parseInt(unbox[1]);
         int amount = unbox.length > 2 ? Integer.parseInt(unbox[2]) : 1;
         ItemStack item;

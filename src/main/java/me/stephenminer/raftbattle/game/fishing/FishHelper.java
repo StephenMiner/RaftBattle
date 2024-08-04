@@ -39,6 +39,7 @@ public class FishHelper {
             if (table != null) tables.add(table);
         }
         tables.sort(Comparator.comparingInt(FishingTable::weight));
+
     }
 
     private FishingTable findTable(){
