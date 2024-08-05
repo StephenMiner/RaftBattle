@@ -71,10 +71,12 @@ public class GameBoard {
                 }
                 SheepCore core1 = host.core(true);
                 sheep1.setPrefix(plugin.teamName(true) + " Sheep:");
-                sheep1.setSuffix(ChatColor.GREEN + " " + shortenDecimal(core1.health()) + "/" + core1.maxHealth() + " HP");
+              //  sheep1.setSuffix(ChatColor.GREEN + " " + shortenDecimal(core1.health()) + "/" + core1.maxHealth() + " HP");
+                sheep1.setSuffix(ChatColor.GREEN + hpDisplay(core1));
                 SheepCore core2 = host.core(false);
                 sheep2.setPrefix(plugin.teamName(false) + " Sheep:");
-                sheep2.setSuffix(ChatColor.GREEN + " " + shortenDecimal(core2.health()) + "/" + core2.maxHealth() + " HP");
+               // sheep2.setSuffix(ChatColor.GREEN + " " + shortenDecimal(core2.health()) + "/" + core2.maxHealth() + " HP");
+                sheep2.setSuffix(ChatColor.GREEN + hpDisplay(core2));
                 count1.setPrefix( plugin.teamName(true) +  ":");
                 count1.setSuffix(ChatColor.WHITE + " " + alive(team1) + " Alive");
                 count2.setPrefix(plugin.teamName(false) + ":");
@@ -214,5 +216,12 @@ public class GameBoard {
     public String shortenDecimal(double num){
         int convert = Math.max(0,(int) (10 * num));
         return "" + convert/10d;
+    }
+
+    public String hpDisplay(SheepCore core){
+        float ratio = (float) (core.health() / core.maxHealth());
+        int percent = (int) (ratio * 100);
+        percent = core.isDead() ? 0 : Math.max(1,percent);
+        return percent + "% HP";
     }
 }
