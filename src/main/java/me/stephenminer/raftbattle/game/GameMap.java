@@ -63,8 +63,8 @@ public class GameMap {
      */
     public void start(){
         if (started) return;
-        sheep1 = new SheepCore(spawn1,10, id);
-        sheep2 = new SheepCore(spawn2, 10, id);
+        sheep1 = new SheepCore(spawn1,300, id);
+        sheep2 = new SheepCore(spawn2, 300, id);
         started = true;
         board.updateBoard();
         fishHelper = new FishHelper(this);
@@ -102,6 +102,8 @@ public class GameMap {
      * Ends the game, resets the map, and removes players
      */
     public void end(){
+        ending = true;
+        started = false;
         for (BlockState state : savedStates.values())
             state.update(true);
         Player[] online = new Player[players.size()];
@@ -266,7 +268,7 @@ public class GameMap {
         board.clearPreferences(player.getUniqueId());
         if (started && reconnect) {
             Team team = board.isTeam1(player) ? board.team1() : board.team2();
-            OfflineProfile offline = new OfflineProfile(player.getUniqueId(),player.getHealth(),player.getFoodLevel(),player.getSaturation(),player.getInventory().getContents(), team);
+            OfflineProfile offline = new OfflineProfile(player.getUniqueId(),player.getHealth(),player.getFoodLevel(),player.getSaturation(),player.getInventory().getContents(), player.getInventory().getArmorContents(),team);
             offlines.put(player.getUniqueId(),offline);
             broadcastMsg(ChatColor.GOLD + player.getName() + " has left, but can reconnect!");
         }else broadcastMsg(ChatColor.GOLD + player.getName() + " has quit!");
@@ -296,6 +298,11 @@ public class GameMap {
             if (item == null) continue;
             Material type = item.getType();
             if (type == Material.COMPASS || type == Material.FISHING_ROD) continue;
+            world.dropItemNaturally(player.getLocation(), item);
+        }
+        ItemStack[] armor = player.getEquipment().getArmorContents();
+        for (ItemStack item : armor){
+            if (item == null) continue;
             world.dropItemNaturally(player.getLocation(), item);
         }
         player.setHealth(20);
@@ -399,8 +406,11 @@ public class GameMap {
     public void outfitPlayer(Player player){
         ItemStack rod = new ItemStack(Material.FISHING_ROD);
         ItemMeta meta = rod.getItemMeta();
-        meta.addEnchant(Enchantment.LURE,5,true);
+        meta.addEnchant(Enchantment.LURE,  5,true);
         meta.spigot().setUnbreakable(true);
+        List<String> lore = new ArrayList<>();
+        lore.add(ChatColor.ITALIC + "There's something fishy here alright...");
+        meta.setLore(lore);
         rod.setItemMeta(meta);
         player.getInventory().addItem(rod);
         player.getInventory().addItem(sheep1.compass);

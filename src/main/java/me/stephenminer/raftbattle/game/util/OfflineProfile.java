@@ -8,15 +8,16 @@ import java.util.UUID;
 
 public class OfflineProfile {
     private final UUID uuid;
-    private final ItemStack[] items;
+    private final ItemStack[] items, armor;
     private final double health;
     private final float saturation;
     private final int food;
     private final Team team;
 
-    public OfflineProfile(UUID uuid, double health, int food, float saturation, ItemStack[] items, Team team){
+    public OfflineProfile(UUID uuid, double health, int food, float saturation, ItemStack[] items, ItemStack[] armor, Team team){
         this.uuid = uuid;
         this.items = items;
+        this.armor = armor;
         this.health = health;
         this.food = food;
         this.saturation = saturation;
@@ -28,10 +29,12 @@ public class OfflineProfile {
         player.setHealth(health);
         player.setSaturation(saturation);
         player.setFoodLevel(food);
+        player.getInventory().setArmorContents(armor);
         if (team != null) team.addPlayer(player);
     }
     public UUID uuid(){ return uuid; }
     public ItemStack[] items(){ return items; }
+    public ItemStack[] armor(){ return armor; }
     public double health(){ return health; }
     public int food(){ return food; }
     public float saturation(){ return saturation; }
