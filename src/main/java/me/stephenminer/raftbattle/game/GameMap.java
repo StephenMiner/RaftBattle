@@ -8,6 +8,8 @@ import me.stephenminer.raftbattle.game.util.OfflineProfile;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.Chest;
+import org.bukkit.block.ContainerBlock;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -29,6 +31,7 @@ public class GameMap {
     private final BoundingBox bounds;
     private final Set<UUID> players;
     private final HashMap<Location, BlockState> savedStates;
+    private final HashMap<Location, ItemStack[]> savedContainers;
     private final HashMap<UUID, OfflineProfile> offlines;
 
     private GameBoard board;
@@ -52,6 +55,7 @@ public class GameMap {
         this.pos2 = pos2;
         this.bounds = new BoundingBox(pos1.toVector(),pos2.toVector());
         this.savedStates = new HashMap<>();
+        this.savedContainers = new HashMap<>();
         players = new HashSet<>();
         offlines = new HashMap<>();
         this.name = name;
@@ -104,8 +108,13 @@ public class GameMap {
     public void end(){
         ending = true;
         started = false;
-        for (BlockState state : savedStates.values())
+        for (BlockState state : savedStates.values()) {
             state.update(true);
+            if (state instanceof ContainerBlock && savedContainers.containsKey(state.getLocation())){
+                ((ContainerBlock) state).getInventory().setContents(savedContainers.get(state.getLocation()));
+            }
+            state.update(true);
+        }
         Player[] online = new Player[players.size()];
         int index = 0;
         for (UUID uuid : players){
@@ -463,6 +472,9 @@ public class GameMap {
     public void trySaveBlockState(BlockState state){
         Location loc = state.getLocation();
         if (savedStates.containsKey(loc)) return;
+
+        if (state instanceof ContainerBlock)
+            savedContainers.put(loc,((ContainerBlock) state).getInventory().getContents());
         savedStates.put(loc,state);
     }
 
