@@ -297,12 +297,12 @@ public class GameMap {
         for (ItemStack item : content){
             if (item == null) continue;
             Material type = item.getType();
-            if (type == Material.COMPASS || type == Material.FISHING_ROD) continue;
+            if (type == Material.AIR || type == Material.COMPASS || type == Material.FISHING_ROD) continue;
             world.dropItemNaturally(player.getLocation(), item);
         }
         ItemStack[] armor = player.getEquipment().getArmorContents();
         for (ItemStack item : armor){
-            if (item == null) continue;
+            if (item == null || item.getType() == Material.AIR) continue;
             world.dropItemNaturally(player.getLocation(), item);
         }
         player.setHealth(20);
