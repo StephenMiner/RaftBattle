@@ -14,7 +14,7 @@ public class FishingTable {
     private final HashMap<Integer, List<ItemStack>> lootByWeight;
     private final List<LootPair> loot;
     private final Random random;
-    private int weight;
+    private final int weight;
 
     public FishingTable(String id, int weight, List<LootPair> loot){
         random = new Random();
@@ -35,11 +35,14 @@ public class FishingTable {
 
     private List<ItemStack> rolledItems(int roll){
         List<ItemStack> validDrops = null;
+       // System.out.println("roll:" + roll);
         for (LootPair lootPair : loot) {
             int weight = lootPair.weight();
+            //System.out.println(weight);
             roll -= weight;
             if (roll < 1) {
                 validDrops = lootByWeight.get(weight);
+                break;
             }
         }
         return validDrops;
@@ -60,4 +63,7 @@ public class FishingTable {
     }
 
     public int weight(){ return weight; }
+
+    public List<LootPair> loot(){ return loot; }
+
 }
