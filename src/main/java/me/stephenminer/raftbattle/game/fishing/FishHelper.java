@@ -59,7 +59,7 @@ public class FishHelper {
     }
 
     private List<FishingTable> rollTables(){
-        List<FishingTable> tables = new ArrayList<>();
+//        List<FishingTable> tables = new ArrayList<>();
         for (FishingTable table : this.tables){
             int roll = random.nextInt(100);
             if (roll < table.weight()){

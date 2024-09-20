@@ -47,7 +47,6 @@ public class FishingTable {
         }
         return validDrops;
     }
-
     private HashMap<Integer, List<ItemStack>> groupByWeight(){
         HashMap<Integer, List<ItemStack>> byWeight = new HashMap<>();
         for (LootPair entry : loot){
