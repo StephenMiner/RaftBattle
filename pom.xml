@@ -6,7 +6,7 @@
 
   <groupId>me.stephenminer</groupId>
   <artifactId>RaftBattle</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0.3-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>RaftBattle</name>

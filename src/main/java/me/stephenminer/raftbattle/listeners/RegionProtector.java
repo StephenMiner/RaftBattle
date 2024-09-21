@@ -22,6 +22,7 @@ import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -139,6 +140,8 @@ public class RegionProtector implements Listener {
         map.trySaveBlockState(block.getState());
     }
 
+
+
     @EventHandler
     public void handleExplosions(EntityExplodeEvent event){
         List<Block> affected = event.blockList();
@@ -168,6 +171,20 @@ public class RegionProtector implements Listener {
         map.trySaveBlockState(to.getState());
     }
 
+    @EventHandler
+    public void stopGrowth(StructureGrowEvent event){
+        List<BlockState> states = event.getBlocks();
+        if (states.isEmpty()) return;
+        BlockState root = states.get(0);
+        GameMap map = regionIn(root.getBlock());
+        if (map == null) return;
+        for (int i = states.size()-1; i>=0; i--){
+            BlockState state = states.get(i);
+            if (!map.isInMap(state.getBlock()))
+                states.remove(i);
+            else map.trySaveBlockState(state);
+        }
+    }
 
 
 

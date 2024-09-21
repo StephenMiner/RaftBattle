@@ -112,8 +112,9 @@ public class GameMap {
             state.update(true);
             if (state instanceof ContainerBlock && savedContainers.containsKey(state.getLocation())){
                 ((ContainerBlock) state).getInventory().setContents(savedContainers.get(state.getLocation()));
+                state.update(true);
             }
-            state.update(true);
+
         }
         Player[] online = new Player[players.size()];
         int index = 0;
@@ -508,6 +509,8 @@ public class GameMap {
     public boolean starting(){ return starting; }
     public boolean ending(){ return ending; }
 
+    public Location pos1(){ return pos1; }
+    public Location pos2(){ return pos2; }
     public Location spawn1(){ return spawn1; }
     public Location spawn2(){ return spawn2; }
     public Location waiting(){ return waiting;}
