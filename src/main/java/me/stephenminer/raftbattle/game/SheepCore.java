@@ -3,7 +3,6 @@ package me.stephenminer.raftbattle.game;
 import me.stephenminer.raftbattle.RaftBattle;
 import org.bukkit.*;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
 import org.bukkit.entity.Sheep;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
