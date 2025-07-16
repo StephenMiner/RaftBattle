@@ -8,12 +8,11 @@ import me.stephenminer.raftbattle.game.util.OfflineProfile;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.Chest;
 import org.bukkit.block.ContainerBlock;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -473,9 +472,18 @@ public class GameMap {
     public void trySaveBlockState(BlockState state){
         Location loc = state.getLocation();
         if (savedStates.containsKey(loc)) return;
-
-        if (state instanceof ContainerBlock)
-            savedContainers.put(loc,((ContainerBlock) state).getInventory().getContents());
+        //Change to BlockContainer if no worky
+        if (state instanceof InventoryHolder) {
+            ItemStack[] items = ((InventoryHolder) state).getInventory().getContents();
+            int len = items.length;
+            ItemStack[] copy = new ItemStack[len];
+            for (int i = 0; i < len; i++){
+                if (items[i] == null || items[i].getType() == Material.AIR) continue;
+                ItemStack itemCopy = new ItemStack(items[i]);
+                copy[i] = itemCopy;
+            }
+            savedContainers.put(loc, copy);
+        }
         savedStates.put(loc,state);
     }
 
