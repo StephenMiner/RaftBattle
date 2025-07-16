@@ -2,7 +2,6 @@ package me.stephenminer.raftbattle.listeners;
 
 import me.stephenminer.raftbattle.RaftBattle;
 import me.stephenminer.raftbattle.game.GameMap;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -18,13 +17,11 @@ import org.bukkit.event.block.*;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Collection;
 import java.util.List;
@@ -182,7 +179,7 @@ public class RegionProtector implements Listener {
             BlockState state = states.get(i);
             if (!map.isInMap(state.getBlock()))
                 states.remove(i);
-            else map.trySaveBlockState(state);
+            else map.trySaveBlockState(state.getBlock().getState());
         }
     }
 
