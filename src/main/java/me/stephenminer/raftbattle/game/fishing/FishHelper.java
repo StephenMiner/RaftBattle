@@ -21,6 +21,10 @@ public class FishHelper {
         loadTables();
     }
 
+    /**
+     * Rolls a drop based on the stored FishingTables
+     * @return an ItemStack from one of the FishingTables
+     */
     public ItemStack fish(){
         FishingTable table = findTable();
         if (table == null){
@@ -29,6 +33,11 @@ public class FishHelper {
         return table.makeRoll();
     }
 
+    /**
+     * Loads all of the fishing loot tables from the loot.yml file
+     * and stores them in a list of FishingTable objects sorted by their weights/chances to happen
+     * The sorting is not really relevant anymore
+     */
     private void loadTables(){
         tables = new ArrayList<>();
         Set<String> ids = plugin.loot.getConfig().getKeys(false);
@@ -61,6 +70,12 @@ public class FishHelper {
         return mergeTables(pool);
     }
 
+    /**
+     * Randomly selects FishingTables from our total pool of FishingTables by
+     * rolling a number 0 - 99 for each one. If that our roll is less than the table's "chance,"
+     * then we add it to the ArrayList we return
+     * @return A List containing randomly selected FishingTables
+     */
     private List<FishingTable> rollTables(){
         List<FishingTable> tables = new ArrayList<>();
         for (FishingTable table : this.tables){
@@ -75,7 +90,7 @@ public class FishHelper {
     /**
      * Merges all LootPairs in each of the provided FishingTables into a singular FishingTable object
      * @param tables a Collection of FishingTables to merge
-     * @return A new FishingTable with a null id and -1 weight and all the LootPairs found in each of the provided tables
+     * @return A new FishingTable with a null id and -1 weight and all the LootPairs found in each of the provided FishingTables
      */
     private FishingTable mergeTables(Collection<FishingTable> tables){
         List<LootPair> loot = new ArrayList<>();
