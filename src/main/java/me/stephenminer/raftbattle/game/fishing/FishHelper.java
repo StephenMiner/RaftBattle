@@ -7,7 +7,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class FishHelper {
     private final RaftBattle plugin;
@@ -53,9 +52,13 @@ public class FishHelper {
         return null;
 
          */
-        List<FishingTable> pool = rollTables();
+        /*
+        Old code to choose a random loot table that passed a roll check
         if (pool.isEmpty()) return null;
         else return pool.get(random.nextInt(pool.size()));
+         */
+        List<FishingTable> pool = rollTables();
+        return mergeTables(pool);
     }
 
     private List<FishingTable> rollTables(){
@@ -67,6 +70,19 @@ public class FishHelper {
             }
         }
         return tables;
+    }
+
+    /**
+     * Merges all LootPairs in each of the provided FishingTables into a singular FishingTable object
+     * @param tables a Collection of FishingTables to merge
+     * @return A new FishingTable with a null id and -1 weight and all the LootPairs found in each of the provided tables
+     */
+    private FishingTable mergeTables(Collection<FishingTable> tables){
+        List<LootPair> loot = new ArrayList<>();
+        for (FishingTable table : tables){
+            loot.addAll(table.loot());
+        }
+        return new FishingTable(null, 0, loot);
     }
 
 }
