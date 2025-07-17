@@ -175,5 +175,9 @@ public final class RaftBattle extends JavaPlugin {
         return filtered;
     }
 
+    public int getInvincibilityTicks(){
+        return this.settings.getConfig().getInt("spawn-invincibility-ticks");
+    }
+
 
 }
