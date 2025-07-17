@@ -17,6 +17,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
 
@@ -146,6 +147,7 @@ public class GameMap {
         //Not enough players
         if (players.size() < plugin.readMinPlayers()) return;
         final int delay = plugin.readStartDelay();
+        starting = true;
         new BukkitRunnable(){
             int count = 0;
             @Override
@@ -285,7 +287,7 @@ public class GameMap {
         board.team2().removePlayer(player);
         checkEnd();
         player.removeMetadata("mapId",plugin);
-
+        player.removeMetadata("raft-invulnerable", plugin);
         clearPlayer(player);
     }
 
@@ -317,6 +319,8 @@ public class GameMap {
         player.setHealth(20);
         player.setFoodLevel(20);
         player.setSaturation(1);
+        player.setFireTicks(0);
+        //clearPotEffects(player);
         checkEnd();
         clearPlayer(player);
         if (board.isTeam2(player) && !sheep2.isDead()){
@@ -330,6 +334,12 @@ public class GameMap {
         return false;
     }
 
+
+    private void clearPotEffects(Player player){
+        for (PotionEffectType type : PotionEffectType.values()){
+            player.removePotionEffect(type);
+        }
+    }
     /**
      * A timer that when finished will finish respawning the player, putting them in survival at their spawn
      * @param player
@@ -354,6 +364,9 @@ public class GameMap {
                     player.teleport(spawn);
                     outfitPlayer(player);
                     player.setGameMode(GameMode.SURVIVAL);
+                    player.removeMetadata("raft-invulnerable", plugin);
+                    int seconds = (plugin.getInvincibilityTicks() / 20);
+                    player.setMetadata("raft-invulnerable", new FixedMetadataValue(plugin, System.currentTimeMillis() + (seconds * 1000L)));
                     this.cancel();
                     return;
                 }
