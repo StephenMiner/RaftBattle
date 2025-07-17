@@ -75,6 +75,14 @@ public class GameListener implements Listener {
     public void stopPvPDeath(EntityDamageByEntityEvent event){
         if (event.getEntity() instanceof Player){
             Player player = (Player) event.getEntity();
+            if (event.getDamager() instanceof Player){
+                Player damager = (Player) event.getDamager();
+                if (invulnerable(damager))
+                    damager.removeMetadata("raft-invulnerable",plugin);
+            }
+            if (invulnerable(player)){
+                event.setCancelled(true);
+            }
             if (player.getHealth() - event.getFinalDamage() <= 0){
                 GameMap map = gameIn(player);
                 if (map == null) return;
@@ -84,11 +92,13 @@ public class GameListener implements Listener {
                     player.setHealth(20);
                     player.setFoodLevel(20);
                     player.setSaturation(1);
+                    player.setFireTicks(0);
                     return;
                 }
                 boolean respawned = map.respawnPlayer(player);
                 if (respawned) player.sendMessage(ChatColor.GREEN + "You will respawn shortly");
                 else player.sendMessage(ChatColor.RED + "Your team's sheep is dead and you cannot respawn");
+                map.broadcastMsg(generateDeathMessage(player,event.getCause(),event.getDamager()));
                 event.setDamage(0);
             }
         }
@@ -103,6 +113,10 @@ public class GameListener implements Listener {
                 cause == EntityDamageEvent.DamageCause.PROJECTILE) return;
         if (event.getEntity() instanceof Player){
             Player player = (Player) event.getEntity();
+            if (invulnerable(player)){
+                event.setCancelled(true);
+                return;
+            }
             if (player.getHealth() - event.getFinalDamage() <= 0){
                 GameMap map = gameIn(player);
                 if (map == null) return;
@@ -112,6 +126,7 @@ public class GameListener implements Listener {
                     player.setHealth(20);
                     player.setFoodLevel(20);
                     player.setSaturation(1);
+                    player.setFireTicks(0);
                     return;
                 }
 
@@ -339,6 +354,13 @@ public class GameListener implements Listener {
         player.setScoreboard(game.board().board());
         game.broadcastMsg(ChatColor.GOLD + player.getName() + " has rejoined");
 
+    }
+
+
+    private boolean invulnerable(Player player){
+        if (!player.hasMetadata("raft-invulnerable")) return false;
+        long time = player.getMetadata("raft-invulnerable").get(0).asLong();
+        return System.currentTimeMillis() < time;
     }
 
 
