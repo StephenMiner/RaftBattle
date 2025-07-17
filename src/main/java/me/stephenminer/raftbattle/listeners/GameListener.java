@@ -6,6 +6,8 @@ import me.stephenminer.raftbattle.game.SheepCore;
 import me.stephenminer.raftbattle.game.util.OfflineProfile;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -22,6 +24,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class GameListener implements Listener {
     private final RaftBattle plugin;
@@ -45,6 +48,25 @@ public class GameListener implements Listener {
             Item item = (Item) event.getCaught();
             ItemStack replace = map.fishHelper().fish();
             item.setItemStack(replace);
+            spawnRandomFish(player);
+        }
+    }
+
+    /**
+     * Has a 50/50 chance to give the player a fish
+     * @param player - the player to give a fish to 
+     */
+    private void spawnRandomFish(Player player){
+        boolean spawn = ThreadLocalRandom.current().nextBoolean();
+        if (spawn) {
+            World world = player.getWorld();
+            ItemStack fish = new ItemStack(Material.RAW_FISH);
+            HashMap<Integer, ItemStack> toDrop = player.getInventory().addItem(fish);
+            for (ItemStack item : toDrop.values()){
+                world.dropItemNaturally(player.getLocation(), item);
+            }
+
+            System.out.println(1111);
         }
     }
 
