@@ -1,6 +1,37 @@
-test:
-  weight: 20
+wood:
+  weight: 30
   loot:
-    - DIAMOND,10,1
-    - DIRT,80
-    - WOODEN_DOOR,30,2
+    - LOG,2,3,0
+    - WOOD,2,4,0
+    - LOG,2,3,3
+    - WOOD,2,4,3
+    - GRASS,2,5
+    - SAPLING,2,1
+    - BONE,2,1
+material:
+  weight: 30
+  loot:
+    - FLINT,3,3
+    - FEATHER,3,3
+    - IRON_INGOT,3,4
+    - STRING,3,3
+    - STONE,3,9
+    - LEATHER,3,6
+special:
+  maps: raft
+  ponds: pond1,pond2
+  weight: 80
+  loot:
+    - SULPHUR,1,6
+    - LAVA_BUCKET,1,1
+    - EGG,1,8
+    - SNOW_BALL,1,8
+    - GOLDEN_APPLE,1,1
+food:
+  weight: 100
+  loot:
+    - GOLDEN_APPLE,1,2
+    - RAW_FISH,1,9
+    - RAW_FISH,1,9,1
+    - GOLDEN_CARROT,1,6
+    - CAKE,1,1
