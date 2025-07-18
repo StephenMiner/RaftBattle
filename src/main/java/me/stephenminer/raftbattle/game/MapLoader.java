@@ -1,6 +1,7 @@
 package me.stephenminer.raftbattle.game;
 
 import me.stephenminer.raftbattle.RaftBattle;
+import me.stephenminer.raftbattle.game.util.Pond;
 import org.bukkit.Location;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -46,6 +47,32 @@ public class MapLoader {
     }
 
 
+    private String[] loadPondIds(){
+        String entry = plugin.maps.getConfig().getString("maps." + id + ".ponds");
+        if (entry == null || entry.isEmpty()) return null;
+        else return entry.split(",");
+    }
+
+
+    private Pond fromId(String id){
+        String locStrs = plugin.ponds.getConfig().getString("ponds." + id + ".bounds");
+        String[] splitLocs = locStrs.split("/");
+        Location loc1 = plugin.fromString(splitLocs[0]);
+        Location loc2 = plugin.fromString(splitLocs[1]);
+        return new Pond(id, loc1, loc2);
+    }
+
+    public Pond[] loadPonds(){
+        String[] pondIds = loadPondIds();
+        if (pondIds == null || pondIds.length == 0)
+            return new Pond[0]; //makes my life easier when working with the object in the GameMap class I think
+        Pond[] ponds = new Pond[pondIds.length];
+        for (int i = 0; i < ponds.length; i++){
+            ponds[i] = fromId(pondIds[i]);
+        }
+        return ponds;
+    }
+
     public GameMap build(){
         Location[] locPair = unboxBounds();
         if (locPair == null){
@@ -53,7 +80,8 @@ public class MapLoader {
             return null;
         }
         String name = loadName();
-        GameMap map = new GameMap(id, name, locPair[0], locPair[1]);
+        Pond[] ponds = loadPonds();
+        GameMap map = new GameMap(id, name, locPair[0], locPair[1], ponds);
         map.setSpawn1(loadTeamSpawn(true));
         map.setSpawn2(loadTeamSpawn(false));
         map.setWaiting(loadWaiting());
