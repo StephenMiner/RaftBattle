@@ -24,6 +24,7 @@ public class ReloadCmd implements CommandExecutor {
         plugin.loot.reloadConfig();
         plugin.settings.reloadConfig();
         plugin.maps.reloadConfig();
+        plugin.ponds.reloadConfig();
         if (plugin.settings.getConfig().contains("reroute"))
             plugin.reroute = plugin.fromString(plugin.settings.getConfig().getString("reroute"));
         sender.sendMessage(ChatColor.GREEN + "Reloaded files");
