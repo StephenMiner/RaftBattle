@@ -46,7 +46,7 @@ public class GameListener implements Listener {
             GameMap map = gameIn(player);
             if (map == null) return;
             Item item = (Item) event.getCaught();
-            ItemStack replace = map.fishHelper().fish();
+            ItemStack replace = map.fishHelper().fish(player);
             item.setItemStack(replace);
             spawnRandomFish(player);
         }
@@ -65,8 +65,6 @@ public class GameListener implements Listener {
             for (ItemStack item : toDrop.values()){
                 world.dropItemNaturally(player.getLocation(), item);
             }
-
-            System.out.println(1111);
         }
     }
 
