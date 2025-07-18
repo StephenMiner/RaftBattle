@@ -5,6 +5,7 @@ import me.stephenminer.raftbattle.game.fishing.FishHelper;
 import me.stephenminer.raftbattle.game.util.BoundingBox;
 import me.stephenminer.raftbattle.game.util.Items;
 import me.stephenminer.raftbattle.game.util.OfflineProfile;
+import me.stephenminer.raftbattle.game.util.Pond;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -33,6 +34,7 @@ public class GameMap {
     private final HashMap<Location, BlockState> savedStates;
     private final HashMap<Location, ItemStack[]> savedContainers;
     private final HashMap<UUID, OfflineProfile> offlines;
+    private final Pond[] ponds;
 
     private GameBoard board;
     private String name;
@@ -48,7 +50,7 @@ public class GameMap {
      * @param pos1 Location that is centered on a block (corner 1 of the bounding box)
      * @param pos2 Location that is centered on a block  (corner 2 of the bounding box)
      */
-    public GameMap(String id, String name, Location pos1, Location pos2){
+    public GameMap(String id, String name, Location pos1, Location pos2, Pond[] ponds){
         this.plugin = JavaPlugin.getPlugin(RaftBattle.class);
         this.id = id;
         this.pos1 = pos1;
@@ -60,7 +62,9 @@ public class GameMap {
         offlines = new HashMap<>();
         this.name = name;
         board = new GameBoard(this);
+        this.ponds = ponds;
     }
+
 
     /**
      * Starts the game, spawning the sheep, starting the scoreboard, and outfitting the players
@@ -548,6 +552,8 @@ public class GameMap {
     public GameBoard board(){ return board; }
 
     public HashMap<Location,BlockState> savedStates(){ return savedStates; }
+
+    public Pond[] ponds(){ return ponds; }
 
 
 
