@@ -65,4 +65,6 @@ public class FishingTable {
 
     public List<LootPair> loot(){ return loot; }
 
+    public String id(){ return id; }
+
 }
