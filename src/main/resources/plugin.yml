@@ -11,3 +11,4 @@ commands:
     aliases:
       - rquit
   raftreload:
+  pondwand:
