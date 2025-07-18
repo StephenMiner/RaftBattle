@@ -1,9 +1,6 @@
 package me.stephenminer.raftbattle;
 
-import me.stephenminer.raftbattle.commands.GameMapCmd;
-import me.stephenminer.raftbattle.commands.JoinGame;
-import me.stephenminer.raftbattle.commands.QuitGame;
-import me.stephenminer.raftbattle.commands.ReloadCmd;
+import me.stephenminer.raftbattle.commands.*;
 import me.stephenminer.raftbattle.game.GameMap;
 import me.stephenminer.raftbattle.listeners.GameListener;
 import me.stephenminer.raftbattle.listeners.RegionProtector;
@@ -25,6 +22,7 @@ public final class RaftBattle extends JavaPlugin {
     public ConfigFile settings;
     public ConfigFile loot;
     public ConfigFile maps;
+    public ConfigFile ponds;
 
     public HashMap<String, GameMap> active;
 
@@ -35,6 +33,7 @@ public final class RaftBattle extends JavaPlugin {
         this.settings = new ConfigFile(this,"settings");
         this.maps = new ConfigFile(this,"maps");
         this.loot = new ConfigFile(this,"loot");
+        this.ponds = new ConfigFile(this, "ponds");
         registerEvents();
         addCommands();
         if (this.settings.getConfig().contains("reroute"))
@@ -65,6 +64,7 @@ public final class RaftBattle extends JavaPlugin {
         getCommand("raftjoin").setTabCompleter(joinGame);
         getCommand("raftquit").setExecutor(new QuitGame());
         getCommand("raftreload").setExecutor(new ReloadCmd());
+        getCommand("pondwand").setExecutor(new PondWand());
     }
 
 
