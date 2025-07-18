@@ -23,13 +23,14 @@ import java.util.UUID;
 public class RegionSetup implements Listener {
     private final RaftBattle plugin;
     private HashMap<UUID, Location> mCorner1,mCorner2;
-    private Set<UUID> canName;
+    private Set<UUID> regionName, pondName;
 
     public RegionSetup(){
         this.plugin = JavaPlugin.getPlugin(RaftBattle.class);
         mCorner1 = new HashMap<>();
         mCorner2 = new HashMap<>();
-        canName = new HashSet<>();
+        regionName = new HashSet<>();
+        pondName = new HashSet<>();
     }
 
 
@@ -38,7 +39,10 @@ public class RegionSetup implements Listener {
         if (!event.hasItem()) return;
         ItemStack item = event.getItem();
         ItemMeta meta = item.getItemMeta();
-        if (item.getType() == Material.AIR || !plugin.checkLastLine(meta,"raft-battle-map")) return;
+        if (item.getType() == Material.AIR) return;
+        boolean raft = plugin.checkLastLine(meta, "raft-battle-map");
+        boolean pond = plugin.checkLastLine(meta, "raft-battle-pond");
+        if (!raft && !pond) return;
         Player player = event.getPlayer();
         Block block = event.getClickedBlock();
         UUID uuid = player.getUniqueId();
@@ -63,7 +67,10 @@ public class RegionSetup implements Listener {
         event.setCancelled(true);
         if (mCorner1.containsKey(uuid) && mCorner2.containsKey(uuid) && player.hasPermission("raftbattle.region.create")){
             player.sendMessage(ChatColor.GREEN + "Please type out the name of your region in chat!");
-            canName.add(uuid);
+            if (raft)
+                regionName.add(uuid);
+            else if (pond)
+                pondName.add(uuid);
             return;
         }
     }
@@ -71,28 +78,39 @@ public class RegionSetup implements Listener {
 
 
     @EventHandler
-    public void nameRegion(AsyncPlayerChatEvent event){
+    public void nameRegion(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
-        if (!canName.contains(uuid)) return;
+        boolean raft = regionName.contains(uuid);
+        boolean pond = pondName.contains(uuid);
+        if (!raft && !pond) return;
         event.setCancelled(true);
         //erm what the sigma...
         int space = event.getMessage().indexOf(' ');
         String id = ChatColor.stripColor(event.getMessage().toLowerCase()).trim();
         if (space != -1) id = id.substring(space);
-        if (idTaken(id)){
+        if (idTaken(id, raft)) {
             player.sendMessage(ChatColor.RED + id + " is already taken, please choose a different id!");
             return;
         }
-        canName.remove(uuid);
+        pondName.remove(uuid);
+        regionName.remove(uuid);
         Location loc1 = mCorner1.remove(uuid);
         Location loc2 = mCorner2.remove(uuid);
-        saveMap(id, loc1, loc2);
+        if (raft) {
+            saveMap(id, loc1, loc2);
+            player.sendMessage(ChatColor.GREEN + "Created a new map region named " + id);
+        } else{
+            savePond(id, loc1, loc2);
+            player.sendMessage(ChatColor.GREEN + "Created a new pond region named " + id);
+        }
 
     }
 
-    private boolean idTaken(String id){
-        return plugin.maps.getConfig().contains("maps." + id);
+    private boolean idTaken(String id, boolean raft){
+        if (raft)
+            return plugin.maps.getConfig().contains("maps." + id);
+        else return plugin.ponds.getConfig().contains("ponds." + id);
     }
 
     private void saveMap(String id, Location loc1, Location loc2){
@@ -101,5 +119,13 @@ public class RegionSetup implements Listener {
         String locData = plugin.fromBLoc(loc1) + "/" + plugin.fromBLoc(loc2);
         plugin.maps.getConfig().set("maps." + id + ".bounds", locData);
         plugin.maps.saveConfig();
+    }
+
+    private void savePond(String id, Location loc1, Location loc2){
+        loc1 = loc1.getBlock().getLocation();
+        loc2 = loc2.getBlock().getLocation();
+        String locData = plugin.fromBLoc(loc1) + "/" + plugin.fromBLoc(loc2);
+        plugin.ponds.getConfig().set("ponds." + id + ".bounds", locData);
+        plugin.ponds.saveConfig();
     }
 }
