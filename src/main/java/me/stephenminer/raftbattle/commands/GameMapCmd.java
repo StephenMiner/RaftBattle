@@ -11,9 +11,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class GameMapCmd implements CommandExecutor, TabCompleter {
     private final RaftBattle plugin;
@@ -74,17 +72,44 @@ public class GameMapCmd implements CommandExecutor, TabCompleter {
                     delete(id);
                     player.sendMessage(ChatColor.GREEN + "Deleted Map");
                     return true;
+
             }
             if (size >= 3){
-                if (sub.equals("setname")){
-                    StringBuilder builder = new StringBuilder();
-                    for (int i = 2; i < size; i++){
-                        builder.append(args[i]).append(' ');
-                    }
-                    //Delete the last space
-                    builder.deleteCharAt(builder.length()-1);
-                    setName(id, builder.toString());
-                    return true;
+                String pondId = args[2];
+                switch (sub){
+                    case "setname":
+                        StringBuilder builder = new StringBuilder();
+                        for (int i = 2; i < size; i++){
+                            builder.append(args[i]).append(' ');
+                        }
+                        //Delete the last space
+                        builder.deleteCharAt(builder.length()-1);
+                        setName(id, builder.toString());
+                        return true;
+                    case "addpond":
+                        if (!isPond(pondId)){
+                            sender.sendMessage(ChatColor.RED + pondId + " is not a real pond!");
+                            return false;
+                        }
+                        if (addPond(id, pondId)){
+                            sender.sendMessage(ChatColor.GREEN + "Added " + pondId + " to the map " + id);
+                            return true;
+                        }else{
+                            sender.sendMessage(ChatColor.YELLOW + pondId + " is already in the map " + id);
+                            return false;
+                        }
+                    case "removepond":
+                        if (!isPond(args[2])){
+                            sender.sendMessage(ChatColor.RED + args[2] + " is not a real pond!");
+                            return false;
+                        }
+                        if (removePond(id, args[2])){
+                            sender.sendMessage(ChatColor.GREEN + "Removed pond " + pondId + " from the map " + id);
+                            return true;
+                        }else{
+                            sender.sendMessage(ChatColor.YELLOW + pondId + "is already not in the map " + id);
+                            return false;
+                        }
                 }
             }
         }
@@ -96,6 +121,10 @@ public class GameMapCmd implements CommandExecutor, TabCompleter {
     private boolean idExists(String id){
         return plugin.maps.getConfig().contains("maps." + id);
     }
+    private boolean isPond(String pondId){
+        return plugin.ponds.getConfig().contains("ponds." + pondId);
+    }
+
     private void setTeamSpawn(boolean team1, String id, Location loc){
         String path = team1 ?  "maps." + id + ".spawn1" : "maps." + id + ".spawn2";
         plugin.maps.getConfig().set(path, plugin.fromLoc(loc));
@@ -113,11 +142,69 @@ public class GameMapCmd implements CommandExecutor, TabCompleter {
         plugin.maps.getConfig().set("maps." + id, null);
         plugin.maps.saveConfig();
     }
+
+    private boolean pondInMap(String mapId, String pondId){
+        String ponds = plugin.maps.getConfig().getString("maps." + mapId + ".ponds");
+        if (ponds == null || ponds.isEmpty()) return false;
+        else return ponds.contains(pondId);
+    }
+
+    /**
+     * Adds a pond id to the provided map id's pond entries in the maps.yml file
+     * @param id the map id to add a pond to
+     * @param pondId the pond id of the pond you wish to add to the map
+     * @return true if the pond is added to the map, false if otherwise
+     *          (mapId doesn't exist, pond doesn't exist, pond is already in the map)
+     */
+    private boolean addPond(String id, String pondId){
+        if (!idExists(id) && !isPond(pondId)) return false;
+
+        if (pondInMap(id, pondId)) return false;
+        String path = "maps." + id + ".ponds";
+        String currentPonds = plugin.maps.getConfig().getString(path);
+        if (currentPonds == null) currentPonds = pondId;
+        else currentPonds = currentPonds +  "," + pondId;
+        plugin.maps.getConfig().set(path, currentPonds);
+        return true;
+    }
+
+    /**
+     * Removes a pond id from the provided map id's pond entries in the maps.yml file
+     * @param id the map id to add a pond to
+     * @param pondId the pond id of the pond you wish to add to the map
+     * @return true if the pond is removed from the map, false if otherwise
+     *          (map isn't real, pond isn't real, pond isn't in the map)
+     */
+    private boolean removePond(String id, String pondId){
+        if (!idExists(id) && !isPond(pondId)) return false;
+
+        if (!pondInMap(id, pondId)) return false;
+        String path = "maps." + id + ".ponds";
+        String currentPonds = plugin.maps.getConfig().getString(path);
+        //Break down string into individual pond ids, so we can reconstruct it without the pondId we want to remove
+        String[] unbox = currentPonds.split(",");
+        StringBuilder newPonds = new StringBuilder();
+        for (String pond : unbox){
+            if (pond.equalsIgnoreCase(pondId)) continue;
+            newPonds.append(pond).append(',');
+        }
+        //This is to delete the extra comma we generate when placing any word into the string
+        if (newPonds.length() > 0) newPonds.deleteCharAt(newPonds.length()-1);
+        plugin.maps.getConfig().set(path, newPonds.toString());
+        return true;
+    }
     @Override
     public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args){
         int size = args.length;
         if (size == 1) return ids(args[0]);
         if (size == 2) return subs(args[1]);
+        if (size == 3){
+            String sub = args[1].toLowerCase();
+            if (sub.equals("addpond"))
+                return ponds(args[2]);
+            if (sub.equals("removepond"))
+                return pondsInMap(args[0], args[2]);
+        }
         return null;
     }
 
@@ -134,6 +221,21 @@ public class GameMapCmd implements CommandExecutor, TabCompleter {
         subs.add("waitingarea");
         subs.add("setname");
         subs.add("delete");
+        subs.add("addpond");
+        subs.add("removepond");
         return plugin.filter(subs, match);
+    }
+
+    private List<String> pondsInMap(String map, String match){
+        if (!plugin.maps.getConfig().contains("maps." + map + ".ponds")) return null;
+        String pondStr = plugin.maps.getConfig().getString("maps." + map + ".ponds");
+        String[] itemizedStr = pondStr.split(",");
+        return plugin.filter(Arrays.asList(itemizedStr), match);
+    }
+
+    private List<String> ponds(String match){
+        if (!plugin.ponds.getConfig().contains("ponds")) return null;
+        Collection<String> pondIds = plugin.ponds.getConfig().getConfigurationSection("ponds").getKeys(false);
+        return plugin.filter(pondIds, match);
     }
 }
