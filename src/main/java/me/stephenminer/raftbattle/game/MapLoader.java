@@ -5,6 +5,9 @@ import me.stephenminer.raftbattle.game.util.Pond;
 import org.bukkit.Location;
 import org.bukkit.plugin.java.JavaPlugin;
 
+/**
+ * Used to for loading GameMap objects from the maps.yml file
+ */
 public class MapLoader {
     private final RaftBattle plugin;
     private final String id;
@@ -62,6 +65,36 @@ public class MapLoader {
         return new Pond(id, loc1, loc2);
     }
 
+    /**\
+     *
+     * @return array containing config options for bubble streams.
+     * Array order as follows: {bubble spawn period, bubble spawn chance, bubble life spawn, max bubble streams, bubble radius}
+     */
+    private int[] loadBubbleStreamConfig(){
+        String base = "maps." + id;
+        int bubbleSpawnPeriod = 1650;
+        if (plugin.maps.getConfig().contains(base + ".bubble-spawn-period"))
+            bubbleSpawnPeriod = plugin.maps.getConfig().getInt(base + ".bubble-spawn-period");
+
+        int bubbleSpawnChance = 30;
+        if (plugin.maps.getConfig().contains(base + ".bubble-spawn-chance"))
+            bubbleSpawnChance = plugin.maps.getConfig().getInt(base + ".bubble-spawn-chance");
+
+        int bubbleLifeSpan = 2400;
+        if (plugin.maps.getConfig().contains(base + ".bubble-life"))
+            bubbleLifeSpan = plugin.maps.getConfig().getInt(base + ".bubble-life");
+
+        int maxStreams = 5;
+        if (plugin.maps.getConfig().contains(base + ".max-bubble-streams"))
+            maxStreams = plugin.maps.getConfig().getInt(base + ".max-bubble-streams");
+
+        int streamRadius = 3;
+        if (plugin.maps.getConfig().contains(base + ".bubble-radius"))
+            streamRadius = plugin.maps.getConfig().getInt(base + ".bubble-radius");
+
+        return new int[]{bubbleSpawnPeriod, bubbleSpawnChance, bubbleLifeSpan, maxStreams, streamRadius};
+    }
+
     public Pond[] loadPonds(){
         String[] pondIds = loadPondIds();
         if (pondIds == null || pondIds.length == 0)
@@ -85,8 +118,17 @@ public class MapLoader {
         map.setSpawn1(loadTeamSpawn(true));
         map.setSpawn2(loadTeamSpawn(false));
         map.setWaiting(loadWaiting());
+        int[] bubbleConfig = loadBubbleStreamConfig();
+        map.setBubbleSpawnPeriod(bubbleConfig[0]);
+        map.setBubbleSpawnChance(bubbleConfig[1]);
+        map.setBubbleLifeSpan(bubbleConfig[2]);
+        map.setMaxStreams(bubbleConfig[3]);
+        map.setStreamRadius(bubbleConfig[4]);
         return map;
     }
+
+
+
 
 
 }

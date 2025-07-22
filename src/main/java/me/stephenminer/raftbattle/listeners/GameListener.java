@@ -46,7 +46,7 @@ public class GameListener implements Listener {
             GameMap map = gameIn(player);
             if (map == null) return;
             Item item = (Item) event.getCaught();
-            ItemStack replace = map.fishHelper().fish(player);
+            ItemStack replace = map.fishHelper().fish(player, event.getHook());
             item.setItemStack(replace);
             spawnRandomFish(player);
         }

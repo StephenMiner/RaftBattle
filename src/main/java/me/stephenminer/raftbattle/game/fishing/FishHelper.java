@@ -4,6 +4,7 @@ import me.stephenminer.raftbattle.RaftBattle;
 import me.stephenminer.raftbattle.game.GameMap;
 import me.stephenminer.raftbattle.game.util.Pond;
 import org.bukkit.Material;
+import org.bukkit.entity.Fish;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -13,8 +14,10 @@ import java.util.*;
 public class FishHelper {
     private final RaftBattle plugin;
     private final Random random;
+
     private List<FishingTable> tables;
     private Map<String, List<FishingTable>> pondTables;
+    private List<FishingTable> bubbleTables;
     private GameMap host;
 
     public FishHelper(GameMap host){
@@ -22,6 +25,7 @@ public class FishHelper {
         this.host = host;
         this.random = new Random();
         this.pondTables = new HashMap<>();
+        this.bubbleTables = new ArrayList<>();
         loadTables();
     }
 
@@ -29,8 +33,9 @@ public class FishHelper {
      * Rolls a drop based on the stored FishingTables
      * @return an ItemStack from one of the FishingTables
      */
-    public ItemStack fish(Player roller){
-        FishingTable table = findTable(roller);
+    public ItemStack fish(Player roller, Fish hook){
+        boolean bubbleStream = host.isInBubbleStream(hook);
+        FishingTable table = findTable(roller, bubbleStream);
         if (table == null){
             return new ItemStack(Material.DEAD_BUSH);
         }
@@ -38,11 +43,11 @@ public class FishHelper {
     }
 
     /**
-     * Loads all of the fishing loot tables from the loot.yml file
+     * Loads all the fishing loot tables from the loot.yml file
      * and stores them in a list of FishingTable objects sorted by their weights/chances to happen
      * The sorting is not really relevant anymore
      */
-    private void loadTables(){
+    protected void loadTables(){
         tables = new ArrayList<>();
         Set<String> ids = plugin.loot.getConfig().getKeys(false);
         String mapId = host.id();
@@ -67,18 +72,25 @@ public class FishHelper {
     private boolean attemptLoad(String mapId, String lootId){
         String mapStrs = plugin.loot.getConfig().getString(lootId + ".maps");
         String pondStrs = plugin.loot.getConfig().getString(lootId + ".ponds");
-
-        //map has no loading restrictions
+        boolean bubbleStream = plugin.loot.getConfig().getBoolean(lootId + ".bubble-stream");
+        //loottable has no loading restrictions
         if ((mapStrs == null ||  mapStrs.isEmpty()) && (pondStrs == null || pondStrs.isEmpty())) {
             FishingTable table = new LootLoader(lootId).build();
-            if (table != null) tables.add(table);
+            if (table != null) {
+                if (bubbleStream)
+                    bubbleTables.add(table);
+                else tables.add(table);
+            }
             return true;
         }
         //map is designated as having this loottable
         if  (mapStrs != null && mapStrs.contains(mapId)){
             FishingTable table = new LootLoader(lootId).build();
-            if (table != null)
-                tables.add(table);
+            if (table != null) {
+                if (bubbleStream)
+                    bubbleTables.add(table);
+                else tables.add(table);
+            }
             return true;
         }
 
@@ -109,7 +121,11 @@ public class FishHelper {
         return false;
     }
 
-    private List<FishingTable> rollPool(Player roller){
+    private List<FishingTable> rollPool(Player roller, boolean bubbleStream){
+        //If fishing in a bubble stream, only use the bubble loot tables
+        if (bubbleStream && !bubbleTables.isEmpty())
+            return bubbleTables;
+
         if (pondTables.isEmpty()) return tables;
         else if (roller != null && host.ponds().length > 0){
             //If the roller is in one of our map's ponds, we want to include those loot tables in our pool when making rolls
@@ -124,7 +140,7 @@ public class FishHelper {
         }else return tables;
     }
 
-    private FishingTable findTable(Player roller){
+    private FishingTable findTable(Player roller, boolean bubbleStream){
         //stuff before is for when loot tables were weight baed
         /*
         int max = tables.stream().mapToInt(FishingTable::weight).sum();
@@ -141,7 +157,7 @@ public class FishHelper {
         if (pool.isEmpty()) return null;
         else return pool.get(random.nextInt(pool.size()));
          */
-        List<FishingTable> pool = rollTables(roller);
+        List<FishingTable> pool = rollTables(roller, bubbleStream);
         return mergeTables(pool);
     }
 
@@ -151,9 +167,9 @@ public class FishHelper {
      * then we add it to the ArrayList we return
      * @return A List containing randomly selected FishingTables
      */
-    private List<FishingTable> rollTables(Player roller){
+    private List<FishingTable> rollTables(Player roller, boolean bubbleStream){
         List<FishingTable> tables = new ArrayList<>();
-        List<FishingTable> rollPool = rollPool(roller);
+        List<FishingTable> rollPool = rollPool(roller, bubbleStream);
         for (FishingTable item : rollPool){
             plugin.getLogger().info(item.id());
         }
@@ -176,6 +192,7 @@ public class FishHelper {
         for (FishingTable table : tables){
             loot.addAll(table.loot());
         }
+        if (loot.isEmpty()) return null;
         return new FishingTable(null, 0, loot);
     }
 

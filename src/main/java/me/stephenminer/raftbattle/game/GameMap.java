@@ -2,10 +2,7 @@ package me.stephenminer.raftbattle.game;
 
 import me.stephenminer.raftbattle.RaftBattle;
 import me.stephenminer.raftbattle.game.fishing.FishHelper;
-import me.stephenminer.raftbattle.game.util.BoundingBox;
-import me.stephenminer.raftbattle.game.util.Items;
-import me.stephenminer.raftbattle.game.util.OfflineProfile;
-import me.stephenminer.raftbattle.game.util.Pond;
+import me.stephenminer.raftbattle.game.util.*;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -23,6 +20,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 public class GameMap {
@@ -34,13 +32,21 @@ public class GameMap {
     private final HashMap<Location, BlockState> savedStates;
     private final HashMap<Location, ItemStack[]> savedContainers;
     private final HashMap<UUID, OfflineProfile> offlines;
+
     private final Pond[] ponds;
+
+    private BubbleStream[] activeStreams;
+
 
     private GameBoard board;
     private String name;
     private Location spawn1,spawn2,waiting;
     private FishHelper fishHelper;
     private boolean started, starting, ending;
+
+    private int maxStreams, streamCount;
+    private int safeY;
+    private int bubbleSpawnPeriod, bubbleSpawnChance, bubbleLifeSpan, streamRadius;
 
     private SheepCore sheep1,sheep2;
     /**
@@ -63,6 +69,7 @@ public class GameMap {
         this.name = name;
         board = new GameBoard(this);
         this.ponds = ponds;
+        activeStreams = null;
     }
 
 
@@ -104,6 +111,7 @@ public class GameMap {
         }
         sheep1.startTracking(this, board.team2().getPlayers().stream().map(OfflinePlayer::getUniqueId).collect(Collectors.toSet()));
         runWaterCheck();
+        manageBubbleStreams();
     }
 
     /**
@@ -409,6 +417,49 @@ public class GameMap {
         }.runTaskTimer(plugin,1,20);
     }
 
+    public void manageBubbleStreams(){
+        new BukkitRunnable(){
+            int spawnTick = 0;
+            int frame = 0;
+            @Override
+            public void run(){
+                if (!started || ending){
+                    this.cancel();
+                    return;
+                }
+                if (frame > 32)
+                    frame = 0;
+                else frame++;
+                for (BubbleStream stream : activeStreams){
+                    if (stream != null) playAnimation(stream.center(), frame, streamRadius,2);
+                }
+                clearOldStreams();
+                if (spawnTick > bubbleSpawnPeriod ){
+                    spawnTick = 0;
+                    if (streamCount >= maxStreams) return;
+                    int roll = ThreadLocalRandom.current().nextInt();
+                    if (roll < bubbleSpawnChance){
+                        streamCount++;
+                        int[] spawnPos = findStreamLocation(streamRadius, 0);
+                        BubbleStream stream = new BubbleStream(world(),spawnPos[0], spawnPos[2], streamRadius, spawnPos[1]);
+                        System.out.println("created new stream");
+                        System.out.println(spawnPos[0] + "," + spawnPos[1] + "," + spawnPos[2]);
+                        for (int i = 0; i < activeStreams.length; i++)
+                            if (activeStreams[i] == null) {
+                                activeStreams[i] = stream;
+                                break;
+                            }
+                    }
+                }
+                spawnTick++;
+            }
+        }.runTaskTimer(plugin,1,1);
+    }
+
+
+
+
+
 
     /*
     Helper Methods
@@ -473,6 +524,60 @@ public class GameMap {
         }
     }
 
+    private int[] findStreamLocation(int streamRadius, int attempt){
+        int x = ThreadLocalRandom.current().nextInt((int) bounds.minX(), (int) bounds.maxX());
+        int z = ThreadLocalRandom.current().nextInt((int) bounds.minZ(), (int) bounds.maxZ());
+        int heightClearance = 2;
+        final World world = world();
+        int posY = 0; // Only changed when valid is true
+        boolean valid = false;
+        //First loop upwards starting at our safeY position (our lowest bounds if safeY is out of bounds)
+        for (int y = Math.max((int) bounds.minY(), safeY); y < (int) bounds.maxY(); y++){
+            valid = validArea(world,x,y,z,streamRadius, heightClearance);
+            if (valid) {
+                posY = y;
+                break;
+            }
+        }
+        //If a position wasn't found do the same thing but downwards
+        if (!valid) {
+            for (int y = Math.min((int) bounds.maxY(), safeY - 1); y >= bounds.minY(); y--) {
+                valid = validArea(world,x,y,z,streamRadius,heightClearance);
+                if (valid) {
+                    posY = y;
+                    break;
+                }
+            }
+        }
+        //If no position is found still, reroll and retry, else return the found position
+        System.out.println(attempt);
+        if (!valid) return findStreamLocation(streamRadius, attempt + 1);
+        else return new int[]{x, posY, z};
+    }
+
+    private boolean validArea(World world, int posX, int posY, int posZ, int radius, int heightClearance){
+        Block origin = world.getBlockAt(posX,posY,posZ);
+        //Hopefully serve as a way to have a faster check
+        if (origin.getType() != Material.WATER && origin.getType() != Material.STATIONARY_WATER)
+            return false;
+        for (int x = posX - radius; x <= posX + radius; x ++){
+            for (int z = posZ - radius; z <= posZ + radius; z++){
+                Block first = world.getBlockAt(x,posY,z);
+                if (first.getType() != Material.WATER && first.getType() != Material.STATIONARY_WATER) return false;
+                boolean yPass = true;
+                for (int y = posY+1; y <= posY + heightClearance; y++){
+                    Block block = world.getBlockAt(x,y,z);
+                    if (block.isLiquid() || block.getType().isSolid()) {
+                        yPass = false;
+                        break;
+                    }
+                }
+                if (!yPass) return false;
+            }
+
+        }
+        return true;
+    }
     /**
      *
      * @return whether map is full, if players.size() >= max players
@@ -505,6 +610,48 @@ public class GameMap {
     }
 
 
+    private void clearOldStreams(){
+        for (int i = 0; i < activeStreams.length; i++){
+            if (activeStreams[i] == null) continue;
+            BubbleStream stream = activeStreams[i];
+            long aliveDuration = System.currentTimeMillis() - stream.birthday();
+            if (aliveDuration >= bubbleLifeSpan) {
+                activeStreams[i] = null;
+                streamCount--;
+            }
+
+        }
+    }
+
+
+    private void playAnimation(Location pos, int frame, double radius, int circleHeight){
+        World world = pos.getWorld();
+        double var = frame * (Math.PI / 16);
+        Location base = pos.clone();
+        Location first = base.clone().add(Math.cos(var), Math.sin(var) + 1, Math.sin(var));
+        Location second = base.clone().add(Math.cos(var + Math.PI), Math.sin(var) + 1, Math.sin(var + Math.PI));
+        world.playEffect(first, Effect.MAGIC_CRIT, 2);
+        world.playEffect(second, Effect.MAGIC_CRIT, 2);
+        if (frame % 2 == 0) {
+            double y = (circleHeight * Math.sin(var) + 1);
+            for (double theta = 0; theta <= 2 * Math.PI; theta += Math.PI / 20) {
+                double x = radius * Math.cos(theta);
+                double z = radius * Math.sin(theta);
+                base.add(x, y, z);
+                world.playEffect(base, Effect.SMALL_SMOKE, 4);
+                base.subtract(x, y, z);
+            }
+        }
+    }
+
+    public boolean isInBubbleStream(Entity entity){
+        for (BubbleStream stream : activeStreams){
+            if (stream == null) continue;
+            if (stream.positionInStream(entity.getLocation())) return true;
+        }
+        return false;
+    }
+
     /*
 
     Setters and Getters
@@ -529,10 +676,32 @@ public class GameMap {
      */
     public void setWaiting(Location waiting){ this.waiting = waiting; }
 
+    /**
+     * Sets the max number of bubble streams that can exist at once.
+     * Also creates a new array to store bubble streams deleting an old one if it existed already
+     * @param maxStreams
+     */
+    public void setMaxStreams(int maxStreams) {
+        this.maxStreams = maxStreams;
+        activeStreams = new BubbleStream[maxStreams];
+    }
+
+    public void setBubbleSpawnPeriod(int bubbleSpawnPeriod){ this.bubbleSpawnPeriod = bubbleSpawnPeriod; }
+    public void setBubbleSpawnChance(int bubbleSpawnChance){ this.bubbleSpawnChance = bubbleSpawnChance; }
+
+    /**
+     * Note function converts the input ticks into milliseconds
+     * @param bubbleLifeSpan
+     */
+    public void setBubbleLifeSpan(int bubbleLifeSpan){ this.bubbleLifeSpan = bubbleLifeSpan * 50; }
+    public void setStreamRadius(int streamRadius){ this.streamRadius = streamRadius; }
+
 
     public boolean started(){ return started; }
     public boolean starting(){ return starting; }
     public boolean ending(){ return ending; }
+
+    public int maxStreams(){ return maxStreams; }
 
     public Location pos1(){ return pos1; }
     public Location pos2(){ return pos2; }
