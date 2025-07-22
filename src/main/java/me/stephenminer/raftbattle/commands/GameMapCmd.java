@@ -75,7 +75,7 @@ public class GameMapCmd implements CommandExecutor, TabCompleter {
 
             }
             if (size >= 3){
-                String pondId = args[2];
+                String subArg = args[2];
                 switch (sub){
                     case "setname":
                         StringBuilder builder = new StringBuilder();
@@ -87,27 +87,69 @@ public class GameMapCmd implements CommandExecutor, TabCompleter {
                         setName(id, builder.toString());
                         return true;
                     case "addpond":
-                        if (!isPond(pondId)){
-                            sender.sendMessage(ChatColor.RED + pondId + " is not a real pond!");
+                        //sub arg is pond id
+                        if (!isPond(subArg)){
+                            sender.sendMessage(ChatColor.RED + subArg + " is not a real pond!");
                             return false;
                         }
-                        if (addPond(id, pondId)){
-                            sender.sendMessage(ChatColor.GREEN + "Added " + pondId + " to the map " + id);
+                        if (addPond(id, subArg)){
+                            sender.sendMessage(ChatColor.GREEN + "Added " + subArg + " to the map " + id);
                             return true;
                         }else{
-                            sender.sendMessage(ChatColor.YELLOW + pondId + " is already in the map " + id);
+                            sender.sendMessage(ChatColor.YELLOW + subArg + " is already in the map " + id);
                             return false;
                         }
                     case "removepond":
+                        //sub arg is pond id
                         if (!isPond(args[2])){
                             sender.sendMessage(ChatColor.RED + args[2] + " is not a real pond!");
                             return false;
                         }
                         if (removePond(id, args[2])){
-                            sender.sendMessage(ChatColor.GREEN + "Removed pond " + pondId + " from the map " + id);
+                            sender.sendMessage(ChatColor.GREEN + "Removed pond " + subArg + " from the map " + id);
                             return true;
                         }else{
-                            sender.sendMessage(ChatColor.YELLOW + pondId + "is already not in the map " + id);
+                            sender.sendMessage(ChatColor.YELLOW + subArg + "is already not in the map " + id);
+                            return false;
+                        }
+                    case "bubbleinterval":
+                        try{
+                            int bubbleInterval = Integer.parseInt(subArg);
+                            setBubbleInterval(id, bubbleInterval);
+                            sender.sendMessage(ChatColor.GREEN + "Set the bubble interval for map " + id + " to " + bubbleInterval);
+                            return true;
+                        }catch (Exception e) {
+                            sender.sendMessage(ChatColor.RED + subArg + " is not a whole number integer!");
+                            return false;
+                        }
+                    case "bubblelife":
+                        try{
+                            int bubbleLife = Integer.parseInt(subArg);
+                            setBubbleLifeSpan(id, bubbleLife);
+                            sender.sendMessage(ChatColor.GREEN + "Set the bubble interval for map " + id + " to " + bubbleLife);
+                            return true;
+                        }catch (Exception e){
+                            sender.sendMessage(ChatColor.RED + subArg + " is not a whole number integer!");
+                            return false;
+                        }
+                    case "bubblechance":
+                        try{
+                            int bubbleChance = Integer.parseInt(subArg);
+                            setBubbleChance(id, bubbleChance);
+                            sender.sendMessage(ChatColor.GREEN + "Set the bubble interval for map " + id + " to " + bubbleChance);
+                            return true;
+                        }catch (Exception e){
+                            sender.sendMessage(ChatColor.RED + subArg + " is not a whole number integer!");
+                            return false;
+                        }
+                    case "maxbubblestreams":
+                        try{
+                            int maxStreams = Integer.parseInt(subArg);
+                            setMaxBubbleStreams(id, maxStreams);
+                            sender.sendMessage(ChatColor.GREEN + "Set the bubble interval for map " + id + " to " + maxStreams);
+                            return true;
+                        }catch (Exception e){
+                            sender.sendMessage(ChatColor.RED + subArg + " is not a whole number integer!");
                             return false;
                         }
                 }
@@ -165,6 +207,7 @@ public class GameMapCmd implements CommandExecutor, TabCompleter {
         if (currentPonds == null) currentPonds = pondId;
         else currentPonds = currentPonds +  "," + pondId;
         plugin.maps.getConfig().set(path, currentPonds);
+        plugin.maps.saveConfig();
         return true;
     }
 
@@ -191,8 +234,32 @@ public class GameMapCmd implements CommandExecutor, TabCompleter {
         //This is to delete the extra comma we generate when placing any word into the string
         if (newPonds.length() > 0) newPonds.deleteCharAt(newPonds.length()-1);
         plugin.maps.getConfig().set(path, newPonds.toString());
+        plugin.maps.saveConfig();
         return true;
     }
+
+
+    private void setBubbleInterval(String mapId, int interval){
+        plugin.maps.getConfig().set("maps." + mapId + ".bubble-spawn-period", interval);
+        plugin.maps.saveConfig();
+    }
+
+    private void setBubbleLifeSpan(String mapId, int lifeSpan){
+        plugin.maps.getConfig().set("maps." + mapId + ".bubble-life", lifeSpan);
+        plugin.maps.saveConfig();
+    }
+
+    private void setBubbleChance(String mapId, int bubbleChance){
+        plugin.maps.getConfig().set("maps." + mapId + ".bubble-spawn-chance",bubbleChance);
+        plugin.maps.saveConfig();
+    }
+
+    private void setMaxBubbleStreams(String mapId, int maxStreams){
+        plugin.maps.getConfig().set("maps." + mapId + ".max-bubble-streams", maxStreams);
+        plugin.maps.saveConfig();
+    }
+
+
     @Override
     public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args){
         int size = args.length;
@@ -223,6 +290,10 @@ public class GameMapCmd implements CommandExecutor, TabCompleter {
         subs.add("delete");
         subs.add("addpond");
         subs.add("removepond");
+        subs.add("bubbleInterval");
+        subs.add("bubbleLife");
+        subs.add("bubbleChance");
+        subs.add("maxBubbleStreams");
         return plugin.filter(subs, match);
     }
 
