@@ -441,9 +441,10 @@ public class GameMap {
                     if (roll < bubbleSpawnChance){
                         streamCount++;
                         int[] spawnPos = findStreamLocation(streamRadius, 0);
+                        if (spawnPos.length == 0) return;
                         BubbleStream stream = new BubbleStream(world(),spawnPos[0], spawnPos[2], streamRadius, spawnPos[1]);
-                        System.out.println("created new stream");
-                        System.out.println(spawnPos[0] + "," + spawnPos[1] + "," + spawnPos[2]);
+                       // System.out.println("created new stream");
+                    //    System.out.println(spawnPos[0] + "," + spawnPos[1] + "," + spawnPos[2]);
                         for (int i = 0; i < activeStreams.length; i++)
                             if (activeStreams[i] == null) {
                                 activeStreams[i] = stream;
@@ -525,6 +526,7 @@ public class GameMap {
     }
 
     private int[] findStreamLocation(int streamRadius, int attempt){
+        if (attempt >= 1000) return new int[0];
         int x = ThreadLocalRandom.current().nextInt((int) bounds.minX(), (int) bounds.maxX());
         int z = ThreadLocalRandom.current().nextInt((int) bounds.minZ(), (int) bounds.maxZ());
         int heightClearance = 2;
@@ -550,7 +552,7 @@ public class GameMap {
             }
         }
         //If no position is found still, reroll and retry, else return the found position
-        System.out.println(attempt);
+       // System.out.println(attempt);
         if (!valid) return findStreamLocation(streamRadius, attempt + 1);
         else return new int[]{x, posY, z};
     }
@@ -638,7 +640,7 @@ public class GameMap {
                 double x = radius * Math.cos(theta);
                 double z = radius * Math.sin(theta);
                 base.add(x, y, z);
-                world.playEffect(base, Effect.SMALL_SMOKE, 4);
+                world.playEffect(base, Effect.MAGIC_CRIT, 1);
                 base.subtract(x, y, z);
             }
         }
