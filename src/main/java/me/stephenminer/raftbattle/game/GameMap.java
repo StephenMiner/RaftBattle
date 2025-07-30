@@ -121,6 +121,10 @@ public class GameMap {
         ending = true;
         started = false;
         for (BlockState state : savedStates.values()) {
+            Chunk chunk = state.getChunk();
+            //Maybe this fixes the blockstates not loading properly?
+            if (!chunk.isLoaded())
+                chunk.load();
             state.update(true);
             if (state instanceof ContainerBlock && savedContainers.containsKey(state.getLocation())){
                 ((ContainerBlock) state).getInventory().setContents(savedContainers.get(state.getLocation()));
@@ -431,7 +435,7 @@ public class GameMap {
                     frame = 0;
                 else frame++;
                 for (BubbleStream stream : activeStreams){
-                    if (stream != null) playAnimation(stream.center(), frame, streamRadius,2);
+                    if (stream != null) playAnimation(stream.center(), frame, streamRadius,1);
                 }
                 clearOldStreams();
                 if (spawnTick > bubbleSpawnPeriod ){
@@ -630,17 +634,19 @@ public class GameMap {
         World world = pos.getWorld();
         double var = frame * (Math.PI / 16);
         Location base = pos.clone();
-        Location first = base.clone().add(Math.cos(var), Math.sin(var) + 1, Math.sin(var));
-        Location second = base.clone().add(Math.cos(var + Math.PI), Math.sin(var) + 1, Math.sin(var + Math.PI));
-        world.playEffect(first, Effect.MAGIC_CRIT, 2);
-        world.playEffect(second, Effect.MAGIC_CRIT, 2);
+        Location first = base.clone().add(radius * Math.cos(var), radius * Math.sin(var) + 1, radius * Math.sin(var));
+        Location second = base.clone().add(radius * Math.cos(var + Math.PI), radius * Math.sin(var) + 1, radius * Math.sin(var + Math.PI));
+        Effect effect = Effect.INSTANT_SPELL;
+        Effect spiralEffect = Effect.WATERDRIP;
+        world.playEffect(first,spiralEffect, 2);
+        world.playEffect(second, spiralEffect, 2);
         if (frame % 2 == 0) {
             double y = (circleHeight * Math.sin(var) + 1);
             for (double theta = 0; theta <= 2 * Math.PI; theta += Math.PI / 20) {
                 double x = radius * Math.cos(theta);
                 double z = radius * Math.sin(theta);
                 base.add(x, y, z);
-                world.playEffect(base, Effect.MAGIC_CRIT, 1);
+                world.playEffect(base, effect, 1);
                 base.subtract(x, y, z);
             }
         }
