@@ -10,28 +10,37 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 public class ConfigFile {
-    private final RaftBattle plugin;
-    private final String name;
+    protected final RaftBattle plugin;
+    protected final String name;
+    private final boolean defaults;
 
-    public ConfigFile(RaftBattle plugin, String name) {
+
+    public ConfigFile(RaftBattle plugin, String name, boolean defaults) {
         this.plugin = plugin;
         this.name = name;
+        this.defaults = defaults;
         saveDefaultConfig();
     }
 
-    private FileConfiguration dataConfig = null;
+    public ConfigFile(RaftBattle plugin, String name){
+        this(plugin, name, true);
+    }
 
-    private File configFile = null;
+    protected FileConfiguration dataConfig = null;
+
+    protected File configFile = null;
 
     public void reloadConfig() {
         if (this.configFile == null)
             this.configFile = new File(this.plugin.getDataFolder(), name + ".yml");
         this.dataConfig = YamlConfiguration.loadConfiguration(this.configFile);
 
-        InputStream defaultStream = this.plugin.getResource(name + ".yml");
-        if (defaultStream != null) {
-            YamlConfiguration defaultConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(defaultStream));
-            this.dataConfig.setDefaults(defaultConfig);
+        if (defaults) {
+            InputStream defaultStream = this.plugin.getResource(name + ".yml");
+            if (defaultStream != null) {
+                YamlConfiguration defaultConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(defaultStream));
+                this.dataConfig.setDefaults(defaultConfig);
+            }
         }
     }
     public FileConfiguration getConfig(){
