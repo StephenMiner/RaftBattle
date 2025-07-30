@@ -329,7 +329,7 @@ public class GameListener implements Listener {
         return plugin.active.getOrDefault(id,null);
     }
 
-    @EventHandler
+    @EventHandler (priority = EventPriority.HIGHEST)
     public void rejoin(PlayerJoinEvent event){
         GameMap game = null;
         Player player = event.getPlayer();
