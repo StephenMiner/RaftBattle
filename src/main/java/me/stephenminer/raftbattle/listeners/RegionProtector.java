@@ -22,6 +22,7 @@ import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Collection;
 import java.util.List;
@@ -69,13 +70,36 @@ public class RegionProtector implements Listener {
         if (!map.started()){
             player.sendMessage(ChatColor.RED + "You cannot place blocks right now!");
             event.setCancelled(true);
+        }else if (map.shouldStopPlace(block.getLocation())){
+            player.sendMessage(ChatColor.RED + "You cannot place this close to the height limit!");
+            event.setCancelled(true);
         }else{
             popPlace(block, map);
             map.trySaveBlockState(event.getBlockReplacedState());
-
+            if (map.shouldDecay(block.getLocation())){
+                startBlockDecay(map, block);
+            }
         }
     }
 
+    private void startBlockDecay(GameMap map, Block block){
+        new BukkitRunnable(){
+            int tick = 0;
+            @Override
+            public void run(){
+                if (!map.started() || map.ending() || block.getType() == Material.AIR){
+                    this.cancel();
+                    return;
+                }
+                boolean playDecay = map.playDecayAnimation(block,tick);
+                if (playDecay){
+                    this.cancel();
+                    return;
+                }
+                tick++;
+            }
+        }.runTaskTimer(plugin,1,1);
+    }
     @EventHandler
     public void handleEmpty(PlayerBucketEmptyEvent event){
         Block clicked = event.getBlockClicked();
