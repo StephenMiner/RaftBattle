@@ -26,6 +26,9 @@ public class SheepCore {
         this.health = health;
         this.maxHealth = health;
         this.spawn = spawn;
+        Chunk chunk = spawn.getChunk();
+        if (!chunk.isLoaded())
+            chunk.load();
         this.sheep = (Sheep) spawn.getWorld().spawnEntity(spawn, EntityType.SHEEP);
         sheep.setMaxHealth(maxHealth);
         sheep.setHealth(health);
