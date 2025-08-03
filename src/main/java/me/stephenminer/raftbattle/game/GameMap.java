@@ -1,5 +1,6 @@
 package me.stephenminer.raftbattle.game;
 
+import me.stephenminer.raftbattle.ConfigFile;
 import me.stephenminer.raftbattle.RaftBattle;
 import me.stephenminer.raftbattle.game.fishing.FishHelper;
 import me.stephenminer.raftbattle.game.util.*;
@@ -33,6 +34,7 @@ public class GameMap {
     private final HashMap<Location, ItemStack[]> savedContainers;
     private final HashMap<UUID, OfflineProfile> offlines;
 
+
     private final Pond[] ponds;
 
     private BubbleStream[] activeStreams;
@@ -47,6 +49,7 @@ public class GameMap {
     private int maxStreams, streamCount;
     private int safeY;
     private int bubbleSpawnPeriod, bubbleSpawnChance, bubbleLifeSpan, streamRadius;
+    private int decayRange, decayTicks;
 
     private SheepCore sheep1,sheep2;
     /**
@@ -70,6 +73,7 @@ public class GameMap {
         board = new GameBoard(this);
         this.ponds = ponds;
         activeStreams = null;
+        this.decayTicks = 60;
     }
 
 
@@ -126,10 +130,19 @@ public class GameMap {
             if (!chunk.isLoaded())
                 chunk.load();
             state.update(true);
-            if (state instanceof ContainerBlock && savedContainers.containsKey(state.getLocation())){
-                ((ContainerBlock) state).getInventory().setContents(savedContainers.get(state.getLocation()));
-                state.update(true);
+            state = state.getBlock().getState();
+            if (state instanceof ContainerBlock && savedContainers.containsKey(state.getLocation())) {
+                ContainerBlock container = (ContainerBlock) state;
+                try {
+                    System.out.println();
+                    ((ContainerBlock) state).getInventory().setContents(savedContainers.get(state.getLocation()));
+                    state.update(true);
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Failed to update the state of the block " + state.toString() + " at loc " + plugin.fromBLoc(state.getLocation()));
+                    plugin.getLogger().warning(container.getInventory().getSize() + "," + savedContainers.get(state.getLocation()).length);
+                }
             }
+
 
         }
         Player[] online = new Player[players.size()];
@@ -660,6 +673,32 @@ public class GameMap {
         return false;
     }
 
+    public boolean shouldStopPlace(Location loc){
+        Block block = loc.getBlock();
+        Location bLoc = block.getLocation();
+        int y = bLoc.getBlockY();
+        return isInMap(block) && (int) bounds.maxY() - 2 < y;
+    }
+
+    public boolean shouldDecay(Location loc){
+        Block block = loc.getBlock();
+        Location bLoc = block.getLocation();
+        int y = bLoc.getBlockY();
+        return isInMap(block) && (int) bounds.maxY() - decayRange >= y;
+    }
+
+    public boolean playDecayAnimation(Block block, int tick){
+        World world = block.getWorld();
+        if (tick >= decayTicks) {
+            block.setType(Material.AIR);
+            return true;
+        }
+        else if (tick >= decayTicks / 2 && tick % 10 == 0){
+            world.playEffect(block.getLocation().clone().add(0,1,0), Effect.VILLAGER_THUNDERCLOUD, 1);
+        }
+        return false;
+    }
+
     /*
 
     Setters and Getters
@@ -704,6 +743,8 @@ public class GameMap {
     public void setBubbleLifeSpan(int bubbleLifeSpan){ this.bubbleLifeSpan = bubbleLifeSpan * 50; }
     public void setStreamRadius(int streamRadius){ this.streamRadius = streamRadius; }
 
+    public void setDecayRange(int decayRange){ this.decayRange = decayRange; }
+
 
     public boolean started(){ return started; }
     public boolean starting(){ return starting; }
@@ -732,6 +773,8 @@ public class GameMap {
 
     public Pond[] ponds(){ return ponds; }
 
+    public int decayRange(){ return decayRange; }
+    public int decayTicks(){ return decayTicks; }
 
 
 
