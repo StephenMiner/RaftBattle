@@ -95,6 +95,24 @@ public class MapLoader {
         return new int[]{bubbleSpawnPeriod, bubbleSpawnChance, bubbleLifeSpan, maxStreams, streamRadius};
     }
 
+    public int loadDecayRange(){
+        String base = "maps." + id;
+        if (!plugin.maps.getConfig().contains(base + ".decay-range")) return 4;
+        return plugin.maps.getConfig().getInt(base + ".decay-range");
+    }
+
+    public int loadDecayTicks(){
+        String base = "maps." + id;
+        if (!plugin.maps.getConfig().contains(base + ".decay-ticks")) return 200;
+        return plugin.maps.getConfig().getInt(base + ".decay-ticks");
+    }
+
+    public int loadRestrictPlaceRange(){
+        String base = "maps." + id;
+        if (!plugin.maps.getConfig().contains(base + ".restrict-place-range")) return 2;
+        else return plugin.maps.getConfig().getInt(base + ".restrict-place-range");
+    }
+
     public Pond[] loadPonds(){
         String[] pondIds = loadPondIds();
         if (pondIds == null || pondIds.length == 0)
@@ -124,6 +142,9 @@ public class MapLoader {
         map.setBubbleLifeSpan(bubbleConfig[2]);
         map.setMaxStreams(bubbleConfig[3]);
         map.setStreamRadius(bubbleConfig[4]);
+        map.setDecayRange(loadDecayRange());
+        map.setDecayTicks(loadDecayTicks());
+        map.setRestrictPlaceRange(loadRestrictPlaceRange());
         return map;
     }
 

@@ -148,6 +148,36 @@ public class GameMapCmd implements CommandExecutor, TabCompleter {
                             setMaxBubbleStreams(id, maxStreams);
                             sender.sendMessage(ChatColor.GREEN + "Set the bubble interval for map " + id + " to " + maxStreams);
                             return true;
+                        }catch (Exception e) {
+                            sender.sendMessage(ChatColor.RED + subArg + " is not a whole number integer!");
+                            return false;
+                        }
+                    case "setdecayrange":
+                        try{
+                            int decayRange = Integer.parseInt(subArg);
+                            setDecayRange(id, decayRange);
+                            sender.sendMessage(ChatColor.GREEN + "Set decay range for the map " + id + " to " + decayRange + "!");
+                            return true;
+                        }catch (Exception e){
+                            sender.sendMessage(ChatColor.RED + subArg + " is not a whole number integer!");
+                            return false;
+                        }
+                    case "setdecayticks":
+                        try{
+                            int decayTicks = Integer.parseInt(subArg);
+                            setDecayTicks( id, decayTicks);
+                            sender.sendMessage(ChatColor.GREEN + "Set decay ticks for the map " + id + " to " + decayTicks + "!");
+                            return true;
+                        }catch(Exception e){
+                            sender.sendMessage(ChatColor.RED + subArg + " is not a whole number integer!");
+                            return false;
+                        }
+                    case "restrictplacerange":
+                        try{
+                            int restrictPlaceRange = Integer.parseInt(subArg);
+                            setRestrictPlaceRange(id, restrictPlaceRange);
+                            sender.sendMessage(ChatColor.GREEN + "Set restrict place range for the map " + id + " to " + restrictPlaceRange + "!");
+                            return true;
                         }catch (Exception e){
                             sender.sendMessage(ChatColor.RED + subArg + " is not a whole number integer!");
                             return false;
@@ -185,11 +215,22 @@ public class GameMapCmd implements CommandExecutor, TabCompleter {
         plugin.maps.saveConfig();
     }
 
+    private void setDecayRange(String id, int decayRange){
+        plugin.maps.getConfig().set("maps." + id + ".decay-range", decayRange);
+        plugin.maps.saveConfig();
+    }
+
+    private void setDecayTicks(String id, int decayTicks){
+        plugin.maps.getConfig().set("maps." + id + ".decay-ticks", decayTicks);
+        plugin.maps.saveConfig();
+    }
+
     private boolean pondInMap(String mapId, String pondId){
         String ponds = plugin.maps.getConfig().getString("maps." + mapId + ".ponds");
         if (ponds == null || ponds.isEmpty()) return false;
         else return ponds.contains(pondId);
     }
+
 
     /**
      * Adds a pond id to the provided map id's pond entries in the maps.yml file
@@ -259,6 +300,11 @@ public class GameMapCmd implements CommandExecutor, TabCompleter {
         plugin.maps.saveConfig();
     }
 
+    private void setRestrictPlaceRange(String mapId, int restrictPlaceRange){
+        plugin.maps.getConfig().set("maps." + mapId + ".restrict-place-range", restrictPlaceRange);
+        plugin.maps.saveConfig();
+    }
+
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args){
@@ -294,6 +340,9 @@ public class GameMapCmd implements CommandExecutor, TabCompleter {
         subs.add("bubbleLife");
         subs.add("bubbleChance");
         subs.add("maxBubbleStreams");
+        subs.add("setdecayrange");
+        subs.add("setdecayticks");
+        subs.add("setrestrictplacerange");
         return plugin.filter(subs, match);
     }
 

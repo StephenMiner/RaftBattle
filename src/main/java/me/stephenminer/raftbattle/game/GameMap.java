@@ -49,7 +49,7 @@ public class GameMap {
     private int maxStreams, streamCount;
     private int safeY;
     private int bubbleSpawnPeriod, bubbleSpawnChance, bubbleLifeSpan, streamRadius;
-    private int decayRange, decayTicks;
+    private int decayRange, decayTicks, restrictPlaceRange;
 
     private SheepCore sheep1,sheep2;
     /**
@@ -677,14 +677,14 @@ public class GameMap {
         Block block = loc.getBlock();
         Location bLoc = block.getLocation();
         int y = bLoc.getBlockY();
-        return isInMap(block) && (int) bounds.maxY() - 2 < y;
+        return isInMap(block) && (int) bounds.maxY() - restrictPlaceRange < y;
     }
 
     public boolean shouldDecay(Location loc){
         Block block = loc.getBlock();
         Location bLoc = block.getLocation();
         int y = bLoc.getBlockY();
-        return isInMap(block) && (int) bounds.maxY() - decayRange >= y;
+        return isInMap(block) && (int) bounds.maxY() - restrictPlaceRange - decayRange <= y;
     }
 
     public boolean playDecayAnimation(Block block, int tick){
@@ -744,6 +744,8 @@ public class GameMap {
     public void setStreamRadius(int streamRadius){ this.streamRadius = streamRadius; }
 
     public void setDecayRange(int decayRange){ this.decayRange = decayRange; }
+    public void setDecayTicks(int decayTicks){ this.decayTicks = decayTicks; }
+    public void setRestrictPlaceRange(int restrictPlaceRange){ this.restrictPlaceRange = restrictPlaceRange; }
 
 
     public boolean started(){ return started; }
@@ -775,6 +777,8 @@ public class GameMap {
 
     public int decayRange(){ return decayRange; }
     public int decayTicks(){ return decayTicks; }
+
+    public int restrictPlaceRange(){ return restrictPlaceRange; }
 
 
 
