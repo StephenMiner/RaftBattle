@@ -4,6 +4,9 @@ main: me.stephenminer.raftbattle.RaftBattle
 
 commands:
   raftmap:
+
+  raftredefinemap:
+
   raftjoin:
     aliases:
       - rjoin
@@ -11,4 +14,5 @@ commands:
     aliases:
       - rquit
   raftreload:
+
   pondwand:

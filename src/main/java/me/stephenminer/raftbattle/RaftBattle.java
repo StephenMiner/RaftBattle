@@ -59,6 +59,10 @@ public final class RaftBattle extends JavaPlugin {
         GameMapCmd gameMapCmd = new GameMapCmd();
         getCommand("raftmap").setExecutor(gameMapCmd);
         getCommand("raftmap").setTabCompleter(gameMapCmd);
+
+        MapRedefine mapRedefine = new MapRedefine();
+        getCommand("raftredefinemap").setExecutor(mapRedefine);
+        getCommand("raftredefinemap").setTabCompleter(mapRedefine);
         JoinGame joinGame = new JoinGame();
         getCommand("raftjoin").setExecutor(joinGame);
         getCommand("raftjoin").setTabCompleter(joinGame);
