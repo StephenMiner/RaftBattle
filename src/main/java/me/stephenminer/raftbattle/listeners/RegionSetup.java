@@ -2,6 +2,7 @@ package me.stephenminer.raftbattle.listeners;
 
 import me.stephenminer.raftbattle.RaftBattle;
 
+import me.stephenminer.raftbattle.commands.MapRedefine;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -66,6 +67,14 @@ public class RegionSetup implements Listener {
         }
         event.setCancelled(true);
         if (mCorner1.containsKey(uuid) && mCorner2.containsKey(uuid) && player.hasPermission("raftbattle.region.create")){
+            if (MapRedefine.redefining.containsKey(uuid)){
+                String mapId = MapRedefine.redefining.remove(uuid);
+                Location pos1 = mCorner1.remove(uuid);
+                Location pos2 = mCorner2.remove(uuid);
+                saveMap(mapId, pos1, pos2);
+                player.sendMessage(ChatColor.GREEN + "Redefined bounds for map " + mapId + "!");
+                return;
+            }
             player.sendMessage(ChatColor.GREEN + "Please type out the name of your region in chat!");
             if (raft)
                 regionName.add(uuid);
