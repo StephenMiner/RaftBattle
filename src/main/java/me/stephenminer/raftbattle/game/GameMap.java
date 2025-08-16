@@ -1,6 +1,5 @@
 package me.stephenminer.raftbattle.game;
 
-import me.stephenminer.raftbattle.ConfigFile;
 import me.stephenminer.raftbattle.RaftBattle;
 import me.stephenminer.raftbattle.game.fishing.FishHelper;
 import me.stephenminer.raftbattle.game.util.*;
@@ -673,7 +672,7 @@ public class GameMap {
         return false;
     }
 
-    public boolean shouldStopPlace(Location loc){
+    public boolean shouldStopBlockInteraction(Location loc){
         Block block = loc.getBlock();
         Location bLoc = block.getLocation();
         int y = bLoc.getBlockY();
@@ -690,7 +689,11 @@ public class GameMap {
     public boolean playDecayAnimation(Block block, int tick){
         World world = block.getWorld();
         if (tick >= decayTicks) {
+            Material mat = block.getType();
             block.setType(Material.AIR);
+            ItemStack item = new ItemStack(mat);
+            world.dropItemNaturally(block.getLocation(),item);
+
             return true;
         }
         else if (tick >= decayTicks / 2 && tick % 10 == 0){
