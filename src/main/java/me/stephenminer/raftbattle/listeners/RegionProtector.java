@@ -43,6 +43,10 @@ public class RegionProtector implements Listener {
             player.sendMessage(ChatColor.RED + "You cannot break blocks yet");
         }
         else{
+            if (map.shouldStopBlockInteraction(block.getLocation())){
+                event.setCancelled(true);
+                player.sendMessage(ChatColor.RED + "You cannot break blocks this close to the height limit!");
+            }
             chainBlocks(block,map);
             BlockState state = block.getState();
             map.trySaveBlockState(state);
@@ -70,7 +74,7 @@ public class RegionProtector implements Listener {
         if (!map.started()){
             player.sendMessage(ChatColor.RED + "You cannot place blocks right now!");
             event.setCancelled(true);
-        }else if (map.shouldStopPlace(block.getLocation())){
+        }else if (map.shouldStopBlockInteraction(block.getLocation())){
             player.sendMessage(ChatColor.RED + "You cannot place this close to the height limit!");
             event.setCancelled(true);
         }else{
